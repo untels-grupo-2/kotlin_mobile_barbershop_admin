@@ -1,0 +1,14 @@
+package com.example.ta_avance.api.service
+
+import com.example.ta_avance.dto.login.LoginResponse
+import com.example.ta_avance.dto.login.LoginResponseSimple
+import retrofit2.Response
+import retrofit2.http.*
+
+interface UsuarioApiService {
+    @GET("api/usuario/listar")
+    suspend fun listarUsuarios(): Response<LoginResponse>
+
+    @GET("api/usuario/listarId/{id}")
+    suspend fun obtenerUsuarioPorId(@Path("id") id: Long): Response<LoginResponseSimple>
+}
