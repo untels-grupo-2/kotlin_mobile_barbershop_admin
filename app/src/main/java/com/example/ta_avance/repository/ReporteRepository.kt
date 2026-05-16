@@ -1,16 +1,18 @@
 package com.example.ta_avance.repository
 
-import com.example.ta_avance.api.AuthApiService
-import com.example.ta_avance.dto.reporte.DtoReporteResponse
-import retrofit2.Call
+import com.example.ta_avance.api.service.ReporteApiService
+import com.example.ta_avance.dto.reporte.DtoReporte
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ReporteRepository @Inject constructor(
-    private val authApiService: AuthApiService
+    private val reporteApiService: ReporteApiService
 ) {
-    fun obtenerReporte(fechaInicio: LocalDate, fechaFin: LocalDate, servicio: String): Call<DtoReporteResponse> =
-        authApiService.obtenerReporte(fechaInicio, fechaFin, servicio)
+    suspend fun obtenerReporte(fechaInicio: LocalDate, fechaFin: LocalDate, servicio: String): Result<DtoReporte> = runCatching {
+        val response = reporteApiService.obtenerReporte(fechaInicio, fechaFin, servicio)
+        if (response.isSuccessful) response.body()!!.data!!
+        else error("Error ${response.code()}: ${response.message()}")
+    }
 }

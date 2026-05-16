@@ -1,19 +1,24 @@
 package com.example.ta_avance.repository
 
-import com.example.ta_avance.api.AuthApiService
-import com.example.ta_avance.dto.valoracion.ValoracionResponse
+import com.example.ta_avance.api.service.ValoracionApiService
+import com.example.ta_avance.dto.valoracion.ValoracionDto
 import com.example.ta_avance.dto.valoracion.ValoracionSimpleResponse
-import retrofit2.Call
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ValoracionRepository @Inject constructor(
-    private val authApiService: AuthApiService
+    private val valoracionApiService: ValoracionApiService
 ) {
-    fun listarValoraciones(): Call<ValoracionResponse> =
-        authApiService.listarValoraciones()
+    suspend fun listarValoraciones(): Result<List<ValoracionDto>> = runCatching {
+        val response = valoracionApiService.listarValoraciones()
+        if (response.isSuccessful) response.body()!!.data
+        else error("Error ${response.code()}: ${response.message()}")
+    }
 
-    fun responderValoracion(valoracionId: Long): Call<ValoracionSimpleResponse> =
-        authApiService.responderValoracion(valoracionId)
+    suspend fun responderValoracion(valoracionId: Long): Result<ValoracionSimpleResponse> = runCatching {
+        val response = valoracionApiService.responderValoracion(valoracionId)
+        if (response.isSuccessful) response.body()!!
+        else error("Error ${response.code()}: ${response.message()}")
+    }
 }

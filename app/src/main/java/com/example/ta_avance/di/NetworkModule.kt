@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.ta_avance.BuildConfig
 import com.example.ta_avance.api.AuthApiService
 import com.example.ta_avance.api.AuthInterceptor
+import com.example.ta_avance.api.service.*
 import com.example.ta_avance.util.PreferenciasHelper
 import dagger.Module
 import dagger.Provides
@@ -57,8 +58,46 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthApiService(
-        retrofit: Retrofit
-    ): AuthApiService =
+    fun provideAuthApiService(retrofit: Retrofit): AuthApiService =
         retrofit.create(AuthApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideAuthApiServiceKt(retrofit: Retrofit): AuthApiServiceKt =
+        retrofit.create(AuthApiServiceKt::class.java)
+
+    @Provides
+    @Singleton
+    fun provideBarberoApiService(retrofit: Retrofit): BarberoApiService =
+        retrofit.create(BarberoApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideServicioApiService(retrofit: Retrofit): ServicioApiService =
+        retrofit.create(ServicioApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideHorarioApiService(retrofit: Retrofit): HorarioApiService =
+        retrofit.create(HorarioApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideReservaApiService(retrofit: Retrofit): ReservaApiService =
+        retrofit.create(ReservaApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideUsuarioApiService(retrofit: Retrofit): UsuarioApiService =
+        retrofit.create(UsuarioApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideValoracionApiService(retrofit: Retrofit): ValoracionApiService =
+        retrofit.create(ValoracionApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideReporteApiService(retrofit: Retrofit): ReporteApiService =
+        retrofit.create(ReporteApiService::class.java)
 }

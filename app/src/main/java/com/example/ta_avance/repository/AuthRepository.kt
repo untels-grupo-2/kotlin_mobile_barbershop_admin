@@ -1,29 +1,36 @@
 package com.example.ta_avance.repository
 
-import com.example.ta_avance.api.AuthApiService
-import com.example.ta_avance.dto.horario.GenericResponse
+import com.example.ta_avance.api.service.AuthApiServiceKt
 import com.example.ta_avance.dto.login.LoginDataSimpleResponse
 import com.example.ta_avance.dto.login.LoginRequest
 import com.example.ta_avance.dto.recuperacion.RecuperacionRequest
-import com.example.ta_avance.dto.recuperacion.RecuperacionResponse
 import com.example.ta_avance.dto.refresh.RefreshRequest
-import retrofit2.Call
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AuthRepository @Inject constructor(
-    private val authApiService: AuthApiService
+    private val authApiService: AuthApiServiceKt
 ) {
-    fun login(loginRequest: LoginRequest): Call<LoginDataSimpleResponse> =
-        authApiService.login(loginRequest)
+    suspend fun login(loginRequest: LoginRequest): Result<LoginDataSimpleResponse> = runCatching {
+        val response = authApiService.login(loginRequest)
+        if (response.isSuccessful) response.body()!!
+        else error("Error ${response.code()}: ${response.message()}")
+    }
 
-    fun register(registerRequest: LoginRequest): Call<GenericResponse> =
-        authApiService.register(registerRequest)
+    suspend fun register(registerRequest: LoginRequest): Result<Unit> = runCatching {
+        val response = authApiService.register(registerRequest)
+        if (!response.isSuccessful) error("Error ${response.code()}: ${response.message()}")
+    }
 
-    fun recuperarContraseña(recuperacionRequest: RecuperacionRequest): Call<RecuperacionResponse> =
-        authApiService.recuperarContraseña(recuperacionRequest)
+    suspend fun recuperarContraseña(recuperacionRequest: RecuperacionRequest): Result<Unit> = runCatching {
+        val response = authApiService.recuperarContraseña(recuperacionRequest)
+        if (!response.isSuccessful) error("Error ${response.code()}: ${response.message()}")
+    }
 
-    fun refresh(refreshRequest: RefreshRequest): Call<LoginDataSimpleResponse> =
-        authApiService.refresh(refreshRequest)
+    suspend fun refresh(refreshRequest: RefreshRequest): Result<LoginDataSimpleResponse> = runCatching {
+        val response = authApiService.refresh(refreshRequest)
+        if (response.isSuccessful) response.body()!!
+        else error("Error ${response.code()}: ${response.message()}")
+    }
 }

@@ -1,19 +1,24 @@
 package com.example.ta_avance.repository
 
-import com.example.ta_avance.api.AuthApiService
-import com.example.ta_avance.dto.login.LoginResponse
+import com.example.ta_avance.api.service.UsuarioApiService
+import com.example.ta_avance.dto.login.LoginRequest
 import com.example.ta_avance.dto.login.LoginResponseSimple
-import retrofit2.Call
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class UsuarioRepository @Inject constructor(
-    private val authApiService: AuthApiService
+    private val usuarioApiService: UsuarioApiService
 ) {
-    fun listarUsuarios(): Call<LoginResponse> =
-        authApiService.listarUsuarios()
+    suspend fun listarUsuarios(): Result<List<LoginRequest>> = runCatching {
+        val response = usuarioApiService.listarUsuarios()
+        if (response.isSuccessful) response.body()!!.data
+        else error("Error ${response.code()}: ${response.message()}")
+    }
 
-    fun obtenerUsuarioPorId(id: Long): Call<LoginResponseSimple> =
-        authApiService.obtenerUsuarioPorId(id)
+    suspend fun obtenerUsuarioPorId(id: Long): Result<LoginRequest> = runCatching {
+        val response = usuarioApiService.obtenerUsuarioPorId(id)
+        if (response.isSuccessful) response.body()!!.data!!
+        else error("Error ${response.code()}: ${response.message()}")
+    }
 }
