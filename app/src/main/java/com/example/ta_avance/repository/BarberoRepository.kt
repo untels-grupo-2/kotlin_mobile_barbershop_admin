@@ -18,7 +18,7 @@ class BarberoRepository @Inject constructor(
         else error("Error ${response.code()}: ${response.message()}")
     }
 
-    suspend fun crearBarbero(dtoBarbero: RequestBody, imagen: MultipartBody.Part): Result<List<BarberoDto>> = runCatching {
+    suspend fun crearBarbero(dtoBarbero: RequestBody, imagen: MultipartBody.Part?): Result<List<BarberoDto>> = runCatching {
         val response = barberoApiService.crearBarbero(dtoBarbero, imagen)
         if (response.isSuccessful) response.body()!!.data
         else error("Error ${response.code()}: ${response.message()}")
@@ -30,7 +30,7 @@ class BarberoRepository @Inject constructor(
         else error("Error ${response.code()}: ${response.message()}")
     }
 
-    suspend fun actualizarBarbero(id: Int, dtoBarbero: RequestBody, imagen: MultipartBody.Part): Result<BarberoSimpleResponse> = runCatching {
+    suspend fun actualizarBarbero(id: Int, dtoBarbero: RequestBody, imagen: MultipartBody.Part?): Result<BarberoSimpleResponse> = runCatching {
         val response = barberoApiService.actualizarBarbero(id, dtoBarbero, imagen)
         if (response.isSuccessful) response.body()!!
         else error("Error ${response.code()}: ${response.message()}")

@@ -15,7 +15,7 @@ interface BarberoApiService {
     @POST("api/barbero/crear")
     suspend fun crearBarbero(
         @Part("dtoBarbero") dtoBarbero: RequestBody,
-        @Part imagen: MultipartBody.Part
+        @Part imagen: MultipartBody.Part?
     ): Response<BarberoResponse>
 
     @DELETE("api/barbero/eliminar/{id}")
@@ -26,6 +26,6 @@ interface BarberoApiService {
     suspend fun actualizarBarbero(
         @Path("id") id: Int,
         @Part("dtoBarbero") dtoBarbero: RequestBody,
-        @Part imagen: MultipartBody.Part
+        @Part imagen: MultipartBody.Part?
     ): Response<BarberoSimpleResponse>
 }

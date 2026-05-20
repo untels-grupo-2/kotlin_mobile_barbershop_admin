@@ -14,10 +14,12 @@ import com.example.ta_avance.R;
 import com.example.ta_avance.adapters.ValoracionAdapter;
 import com.example.ta_avance.dto.valoracion.ValoracionDto;
 import com.example.ta_avance.viewmodel.ListarValoracionViewModel;
-import com.example.ta_avance.viewmodel.ReservasViewModel;
 
 import java.util.List;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class ListarValoracionActivity extends AppCompatActivity {
 
     private ListarValoracionViewModel viewModel;
@@ -35,29 +37,28 @@ public class ListarValoracionActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         viewModel = new ViewModelProvider(this).get(ListarValoracionViewModel.class);
-        cargarLista();
-    }
 
-    private void cargarLista() {
-        viewModel.obtenerValoraciones(this, new ListarValoracionViewModel.ValoracionCallback() {
-            @Override
-            public void onSuccess(List<ValoracionDto> valoraciones) {
-                listarValoraciones = valoraciones;
-                adapter = new ValoracionAdapter(valoraciones, valoracion -> {
-                    enviarWsp(valoracion);
-                    responderValoracion(valoracion);
-                });
-                recyclerView.setAdapter(adapter);
-            }
-
-            @Override
-            public void onError(String mensaje) {
-                Toast.makeText(ListarValoracionActivity.this, mensaje, Toast.LENGTH_SHORT).show();
-            }
+        viewModel.getValoraciones().observe(this, valoraciones -> {
+            listarValoraciones = valoraciones;
+            adapter = new ValoracionAdapter(valoraciones, valoracion -> {
+                enviarWsp(valoracion);
+                responderValoracion(valoracion);
+            });
+            recyclerView.setAdapter(adapter);
         });
+
+        viewModel.getOperacionExitosa().observe(this, msg -> {
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+            viewModel.obtenerValoraciones();
+        });
+
+        viewModel.getError().observe(this, msg ->
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        );
+
+        viewModel.obtenerValoraciones();
     }
 
-    // Método para enviar un mensaje por WhatsApp
     public void enviarWsp(ValoracionDto valoracion) {
         String numero = valoracion.getCelular();
         String mensaje = "Hola *" + valoracion.getUsuario_nombre() + "*, muchas gracias por tu opinión.\n" +
@@ -72,19 +73,8 @@ public class ListarValoracionActivity extends AppCompatActivity {
         }
     }
 
-    // Método para responder una valoración desde el backend
     private void responderValoracion(ValoracionDto valoracion) {
-        viewModel.responderValoracion(this, valoracion.getValoracion_id(), new ListarValoracionViewModel.ResponderCallback() {
-            @Override
-            public void onSuccess(String mensaje) {
-                Toast.makeText(ListarValoracionActivity.this, mensaje, Toast.LENGTH_SHORT).show();
-                cargarLista();
-            }
-
-            @Override
-            public void onError(String mensaje) {
-                Toast.makeText(ListarValoracionActivity.this, mensaje, Toast.LENGTH_SHORT).show();
-            }
-        });
+        viewModel.responderValoracion(valoracion.getValoracion_id());
+        viewModel.obtenerValoraciones();
     }
 }

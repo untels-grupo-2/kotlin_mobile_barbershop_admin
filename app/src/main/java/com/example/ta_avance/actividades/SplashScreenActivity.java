@@ -12,6 +12,9 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ta_avance.R;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class SplashScreenActivity extends AppCompatActivity {
 
     @Override

@@ -12,6 +12,9 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.ta_avance.R;
 import com.example.ta_avance.viewmodel.RecuperarContraViewModel;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class RecuperarContraActivity extends AppCompatActivity {
 
     private EditText campoUsuario, campoCorreo;
@@ -49,14 +52,13 @@ public class RecuperarContraActivity extends AppCompatActivity {
             finish();
         });
 
-        viewModel.resultado.observe(this, mensaje -> {
+        viewModel.getResultado().observe(this, mensaje -> {
             Toast.makeText(this, mensaje, Toast.LENGTH_LONG).show();
-            finish();  // Opcional: volver al login
+            finish();
         });
 
-        viewModel.error.observe(this, mensaje -> {
-            Toast.makeText(this, mensaje, Toast.LENGTH_LONG).show();
-        });
+        viewModel.getError().observe(this, mensaje ->
+                Toast.makeText(this, mensaje, Toast.LENGTH_LONG).show()
+        );
     }
 }
-

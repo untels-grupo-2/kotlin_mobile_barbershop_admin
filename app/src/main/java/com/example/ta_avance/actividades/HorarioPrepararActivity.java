@@ -1,6 +1,5 @@
 package com.example.ta_avance.actividades;
 
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -15,7 +14,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.lifecycle.ViewModelProvider;
@@ -30,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class HorarioPrepararActivity extends AppCompatActivity {
 
     private HorarioPrepararViewModel viewModel;
@@ -51,7 +52,6 @@ public class HorarioPrepararActivity extends AppCompatActivity {
 
         viewModel.getDias().observe(this, dias -> {
             containerDias.removeAllViews();
-
             for (String dia : dias) {
                 MaterialButton diaButton = new MaterialButton(this);
                 diaButton.setText(dia);
@@ -69,25 +69,26 @@ public class HorarioPrepararActivity extends AppCompatActivity {
                         LinearLayout.LayoutParams.WRAP_CONTENT);
                 params.setMargins(0, 16, 0, 0);
                 diaButton.setLayoutParams(params);
-
                 diaButton.setOnClickListener(v -> mostrarPopupDia(dia));
-
                 containerDias.addView(diaButton);
             }
-
         });
+
+        viewModel.getOperacionExitosa().observe(this, msg ->
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        );
+
+        viewModel.getError().observe(this, msg ->
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        );
 
         Button btnConfirmar = findViewById(R.id.btnConfirmarHorario);
-        btnConfirmar.setOnClickListener(v -> {
-            viewModel.confirmarHorario(this);
-        });
+        btnConfirmar.setOnClickListener(v -> viewModel.confirmarHorario());
+
         Button btnExportarHorario = findViewById(R.id.btnExportarHorario);
-        btnExportarHorario.setOnClickListener(v -> {
-            viewModel.exportarHorario(this);
-        });
+        btnExportarHorario.setOnClickListener(v -> viewModel.exportarHorario(this));
 
-
-        viewModel.cargarBarberos(this);
+        viewModel.cargarBarberos();
     }
 
     private void mostrarPopupDia(String dia) {
@@ -98,7 +99,6 @@ public class HorarioPrepararActivity extends AppCompatActivity {
         Button btnGuardar = popupView.findViewById(R.id.btnGuardar);
 
         tituloDia.setText("Preparación " + dia);
-
         contenedorTurnos.removeAllViews();
 
         List<String> turnos = viewModel.getTurnos().getValue();
@@ -109,7 +109,6 @@ public class HorarioPrepararActivity extends AppCompatActivity {
             return;
         }
 
-        // Por cada turno (ej: "Mañana", "Tarde"), crear sección con checkboxes de barberos
         Map<String, LinearLayout> layoutsPorTurno = new HashMap<>();
 
         for (String turno : turnos) {
@@ -134,17 +133,17 @@ public class HorarioPrepararActivity extends AppCompatActivity {
         }
 
         PopupWindow popupWindow = new PopupWindow(popupView,
-                (int) (getResources().getDisplayMetrics().widthPixels * 0.85), // 85% del ancho de pantalla
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.85),
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 true);
+
         ViewGroup rootView = (ViewGroup) getWindow().getDecorView().getRootView();
         View fondoOscuro = new View(this);
-        fondoOscuro.setBackgroundColor(0x88000000); // fondo semi-transparente
+        fondoOscuro.setBackgroundColor(0x88000000);
         rootView.addView(fondoOscuro, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         popupWindow.setOnDismissListener(() -> rootView.removeView(fondoOscuro));
-
         popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
 
         btnGuardar.setOnClickListener(v -> {
@@ -158,20 +157,18 @@ public class HorarioPrepararActivity extends AppCompatActivity {
                         .filter(view -> view instanceof CheckBox)
                         .map(view -> (CheckBox) view)
                         .filter(CheckBox::isChecked)
-                        .map(cb -> ((Integer) cb.getTag()).longValue())  // Convertir Integer a Long
+                        .map(cb -> ((Integer) cb.getTag()).longValue())
                         .collect(Collectors.toList());
 
                 String turnoIdStr = turnoIds.get(turno.toUpperCase());
                 if (turnoIdStr != null) {
-                    Long turnoId = Long.parseLong(turnoIdStr);   // Convertir String a Long
+                    Long turnoId = Long.parseLong(turnoIdStr);
                     turnosPorTipo.put(turnoId, barberoIdsSeleccionados);
                 }
             }
 
-            viewModel.guardarTurnosDia(this, dia, turnosPorTipo);
+            viewModel.guardarTurnosDia(dia, turnosPorTipo);
             popupWindow.dismiss();
         });
     }
-
-
 }

@@ -1,7 +1,6 @@
 package com.example.ta_avance.actividades;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,6 +12,9 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.ta_avance.R;
 import com.example.ta_avance.viewmodel.RegistroUsuarioViewModel;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class RegistroUsuarioActivity extends AppCompatActivity {
 
     private EditText usuarioInput, contraseñaInput, nombreInput, apellidoInput, correoInput, celularInput;
@@ -42,7 +44,7 @@ public class RegistroUsuarioActivity extends AppCompatActivity {
             String correo = correoInput.getText().toString().trim();
             String celular = celularInput.getText().toString().trim();
 
-            viewModel.registrarUsuario(username, password, nombre, apellido, correo , celular);
+            viewModel.registrarUsuario(username, password, nombre, apellido, correo, celular);
         });
 
         btnVolverHome.setOnClickListener(v -> {
@@ -52,8 +54,7 @@ public class RegistroUsuarioActivity extends AppCompatActivity {
             finish();
         });
 
-        // Observadores del ViewModel
-        viewModel.registroExitoso.observe(this, success -> {
+        viewModel.getRegistroExitoso().observe(this, success -> {
             if (success != null && success) {
                 Toast.makeText(this, "Usuario registrado exitosamente", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(RegistroUsuarioActivity.this, ListarUsuarioActivity.class);
@@ -63,7 +64,7 @@ public class RegistroUsuarioActivity extends AppCompatActivity {
             }
         });
 
-        viewModel.mensajeError.observe(this, error -> {
+        viewModel.getMensajeError().observe(this, error -> {
             if (error != null) {
                 Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
             }

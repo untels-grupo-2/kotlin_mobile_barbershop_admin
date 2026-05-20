@@ -15,12 +15,15 @@ import com.example.ta_avance.adapters.ReservaAdapter;
 import com.example.ta_avance.dto.reserva.DtoReserva;
 import com.example.ta_avance.viewmodel.ReservasViewModel;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class ReservasIdActivity extends AppCompatActivity {
 
     private ReservasViewModel viewModel;
     private RecyclerView recyclerView;
     private long usuarioId;
-    private TextView tituloReservas,tvMontoTotal;
+    private TextView tituloReservas, tvMontoTotal;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,23 +48,20 @@ public class ReservasIdActivity extends AppCompatActivity {
         cargarReservas();
     }
 
-    private void cargarReservas(){
-        String fecha = ""; // vacía para que el backend lo ignore
+    private void cargarReservas() {
+        String fecha = "";
         String estado = "REALIZADA";
 
         viewModel.getReservas().observe(this, reservas -> {
             ReservaAdapter adapter = new ReservaAdapter(reservas, new ReservaAdapter.OnReservaClickListener() {
                 @Override
-                public void onVerDetallesClick(DtoReserva reserva) {
-                }
+                public void onVerDetallesClick(DtoReserva reserva) {}
 
                 @Override
-                public void onReservaRealizadaClick(DtoReserva reserva) {
-                }
+                public void onReservaRealizadaClick(DtoReserva reserva) {}
             }, estado);
             recyclerView.setAdapter(adapter);
 
-            // Obtener montoTotal del primer elemento
             if (reservas != null && !reservas.isEmpty()) {
                 long montoTotal = reservas.get(0).getMontoTotal();
                 String nombreCliente = reservas.get(0).getUsuarioNombre();
@@ -73,7 +73,6 @@ public class ReservasIdActivity extends AppCompatActivity {
             }
         });
 
-
-        viewModel.cargarReservasConId(this, fecha, estado, usuarioId);
+        viewModel.cargarReservasConId(fecha, estado, usuarioId);
     }
 }

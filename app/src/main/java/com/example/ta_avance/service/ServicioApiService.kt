@@ -15,7 +15,7 @@ interface ServicioApiService {
     @POST("api/servicio/crear")
     suspend fun crearServicio(
         @Part("dtoServicio") dtoServicio: RequestBody,
-        @Part imagen: MultipartBody.Part
+        @Part imagen: MultipartBody.Part?
     ): Response<ServicioResponse>
 
     @DELETE("api/servicio/eliminar/{id}")
@@ -26,6 +26,6 @@ interface ServicioApiService {
     suspend fun actualizarServicio(
         @Path("id") id: Int,
         @Part("dtoServicio") dtoServicio: RequestBody,
-        @Part imagen: MultipartBody.Part
+        @Part imagen: MultipartBody.Part?
     ): Response<ServicioSimpleResponse>
 }

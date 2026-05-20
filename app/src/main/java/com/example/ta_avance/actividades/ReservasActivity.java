@@ -5,12 +5,14 @@ import android.content.res.Configuration;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
-import android.widget.Toast;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,21 +27,23 @@ import com.example.ta_avance.dto.login.LoginRequest;
 import com.example.ta_avance.dto.reserva.DtoReserva;
 import com.example.ta_avance.viewmodel.ReservasViewModel;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.CompositeDateValidator;
 import com.google.android.material.datepicker.DateValidatorPointBackward;
 import com.google.android.material.datepicker.DateValidatorPointForward;
 import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.textfield.TextInputEditText;
+
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Locale;
-import android.view.View;
-import android.widget.Button;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class ReservasActivity extends AppCompatActivity {
 
     private ReservasViewModel viewModel;
@@ -77,7 +81,6 @@ public class ReservasActivity extends AppCompatActivity {
 
         viewModel.getReservas().observe(this, reservas -> {
             String estado = spinnerEstado.getSelectedItem().toString();
-
             ReservaAdapter adapterRv = new ReservaAdapter(reservas, new ReservaAdapter.OnReservaClickListener() {
                 @Override
                 public void onVerDetallesClick(DtoReserva reserva) {
@@ -86,20 +89,17 @@ public class ReservasActivity extends AppCompatActivity {
 
                 @Override
                 public void onReservaRealizadaClick(DtoReserva reserva) {
-                    // Aquí puedes llamar a cambiarEstadoReserva o lo que corresponda
-                    viewModel.cambiarEstadoReserva(ReservasActivity.this, reserva.getReservaId(), "REALIZADA", "Reserva completada correctamente");
+                    viewModel.cambiarEstadoReserva(reserva.getReservaId(), "REALIZADA", "Reserva completada correctamente");
                 }
             }, estado);
-
             recyclerView.setAdapter(adapterRv);
         });
 
-
-        viewModel.mensajeError.observe(this, error ->
+        viewModel.getMensajeError().observe(this, error ->
                 Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
         );
 
-        viewModel.cambioEstadoExitoso.observe(this, exitoso -> {
+        viewModel.getCambioEstadoExitoso().observe(this, exitoso -> {
             if (Boolean.TRUE.equals(exitoso)) {
                 Toast.makeText(this, "Estado actualizado", Toast.LENGTH_SHORT).show();
                 cargarReservas();
@@ -134,15 +134,12 @@ public class ReservasActivity extends AppCompatActivity {
             CalendarConstraints constraints = new CalendarConstraints.Builder()
                     .setStart(fechaMin)
                     .setEnd(fechaMax)
-                    .setValidator(
-                            CompositeDateValidator.allOf(Arrays.asList(
-                                    DateValidatorPointForward.from(fechaMin),
-                                    DateValidatorPointBackward.before(fechaMax)
-                            ))
-                    )
+                    .setValidator(CompositeDateValidator.allOf(Arrays.asList(
+                            DateValidatorPointForward.from(fechaMin),
+                            DateValidatorPointBackward.before(fechaMax)
+                    )))
                     .build();
             builder.setSelection(fechaMin).setCalendarConstraints(constraints);
-
         } else if (estadoSeleccionado.equals("REALIZADA")) {
             long fechaMax = hoy.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
             CalendarConstraints constraints = new CalendarConstraints.Builder()
@@ -167,14 +164,14 @@ public class ReservasActivity extends AppCompatActivity {
         String estado = spinnerEstado.getSelectedItem().toString();
 
         if (estado.equals("CREADA") || estado.equals("CONFIRMADA")) {
-            if(fecha.isEmpty()){
-                Toast.makeText(this, "Selecciona un fecha", Toast.LENGTH_SHORT).show();
+            if (fecha.isEmpty()) {
+                Toast.makeText(this, "Selecciona una fecha", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
 
         tituloReservas.setText("Reservas - " + estado);
-        viewModel.cargarReservas(this, fecha, estado);
+        viewModel.cargarReservas(fecha, estado);
     }
 
     private void mostrarPopupDetalle(DtoReserva reserva) {
@@ -214,18 +211,14 @@ public class ReservasActivity extends AppCompatActivity {
 
         btnConfirmar.setOnClickListener(v -> {
             dialog.dismiss();
-
-            // Traer usuario por ID primero
-            viewModel.obtenerUsuarioPorId(this, reserva.getUsuarioId());
-
-            viewModel.usuarioPorIdLiveData.observe(this, usuario -> {
+            viewModel.obtenerUsuarioPorId(reserva.getUsuarioId());
+            viewModel.getUsuarioPorIdLiveData().observe(this, usuario -> {
                 if (usuario != null) {
                     enviarWsp(usuario, reserva);
-                    viewModel.cambiarEstadoReserva(this, reserva.getReservaId(), "CONFIRMADA", "Reserva confirmada por el administrador.");
+                    viewModel.cambiarEstadoReserva(reserva.getReservaId(), "CONFIRMADA", "Reserva confirmada por el administrador.");
                 }
             });
         });
-
 
         btnCancelar.setOnClickListener(v -> {
             dialog.dismiss();
@@ -244,14 +237,14 @@ public class ReservasActivity extends AppCompatActivity {
 
         btnEnviarMotivo.setOnClickListener(v -> {
             String motivo = etMotivoCancelacion.getText().toString().trim();
-            viewModel.cambiarEstadoReserva(this, reservaId, nuevoEstado, motivo);
+            viewModel.cambiarEstadoReserva(reservaId, nuevoEstado, motivo);
             motivoDialog.dismiss();
         });
 
         motivoDialog.show();
     }
 
-    private void enviarWsp(LoginRequest usuario, DtoReserva reserva){
+    private void enviarWsp(LoginRequest usuario, DtoReserva reserva) {
         String numero = usuario.getCelular();
         String mensaje = "Hola *" + usuario.getNombre() + "*, tu reserva ha sido confirmada 🎉\n\n" +
                 "📅 Fecha: *" + reserva.getFechaReserva() + "*\n" +
@@ -264,9 +257,8 @@ public class ReservasActivity extends AppCompatActivity {
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(android.net.Uri.parse(uri));
             startActivity(intent);
-        } catch (Exception e){
+        } catch (Exception e) {
             Toast.makeText(this, "No se pudo abrir WhatsApp", Toast.LENGTH_SHORT).show();
         }
     }
-
 }

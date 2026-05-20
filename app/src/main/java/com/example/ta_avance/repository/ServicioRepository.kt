@@ -18,7 +18,7 @@ class ServicioRepository @Inject constructor(
         else error("Error ${response.code()}: ${response.message()}")
     }
 
-    suspend fun crearServicio(dtoServicio: RequestBody, imagen: MultipartBody.Part): Result<List<ServicioDto>> = runCatching {
+    suspend fun crearServicio(dtoServicio: RequestBody, imagen: MultipartBody.Part?): Result<List<ServicioDto>> = runCatching {
         val response = servicioApiService.crearServicio(dtoServicio, imagen)
         if (response.isSuccessful) response.body()!!.data
         else error("Error ${response.code()}: ${response.message()}")
@@ -30,7 +30,7 @@ class ServicioRepository @Inject constructor(
         else error("Error ${response.code()}: ${response.message()}")
     }
 
-    suspend fun actualizarServicio(id: Int, dtoServicio: RequestBody, imagen: MultipartBody.Part): Result<ServicioSimpleResponse> = runCatching {
+    suspend fun actualizarServicio(id: Int, dtoServicio: RequestBody, imagen: MultipartBody.Part?): Result<ServicioSimpleResponse> = runCatching {
         val response = servicioApiService.actualizarServicio(id, dtoServicio, imagen)
         if (response.isSuccessful) response.body()!!
         else error("Error ${response.code()}: ${response.message()}")
