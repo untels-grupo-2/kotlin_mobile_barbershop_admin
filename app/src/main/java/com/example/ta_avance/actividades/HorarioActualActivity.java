@@ -18,6 +18,9 @@ import com.google.android.material.button.MaterialButton;
 import java.util.List;
 import java.util.Map;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class HorarioActualActivity extends AppCompatActivity {
     private HorarioActualViewModel viewModel;
     private LinearLayout container;
@@ -99,6 +102,6 @@ public class HorarioActualActivity extends AppCompatActivity {
         });
 
         // 🚀 Llamada real a la API
-        viewModel.cargarHorarios(this);
+        viewModel.cargarHorarios();
     }
 }

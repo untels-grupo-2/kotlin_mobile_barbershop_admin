@@ -15,6 +15,9 @@ import com.example.ta_avance.R;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.ta_avance.viewmodel.MainViewModel;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class MainActivity extends AppCompatActivity {
 
     private EditText campoUsuario, campoContraseña;
@@ -60,12 +63,12 @@ public class MainActivity extends AppCompatActivity {
         btnIngresarApp.startAnimation(fadeIn);
         btnOlvideContrasena.startAnimation(fadeIn);
 
-        mainViewModel.loginStatus.observe(this, status -> {
+        mainViewModel.getLoginStatus().observe(this, status -> {
             switch (status) {
                 case "SUCCESS":
                     Intent intent = new Intent(this, AdminHomeActivity.class);
-                    intent.putExtra("nombre", mainViewModel.nombre.getValue());
-                    intent.putExtra("apellido", mainViewModel.apellido.getValue());
+                    intent.putExtra("nombre", mainViewModel.getNombre().getValue());
+                    intent.putExtra("apellido", mainViewModel.getApellido().getValue());
                     startActivity(intent);
                     finish();
                     break;

@@ -20,6 +20,9 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.ta_avance.R;
 import com.example.ta_avance.viewmodel.AdminHomeViewModel;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class AdminHomeActivity extends AppCompatActivity {
 
     private AdminHomeViewModel viewModel;
@@ -37,7 +40,7 @@ public class AdminHomeActivity extends AppCompatActivity {
         String apellido = getIntent().getStringExtra("apellido");
         viewModel.setNombreYApellido(nombre, apellido);
 
-        viewModel.nombreCompleto.observe(this, texto -> adminTitle.setText(texto));
+        viewModel.getNombreCompleto().observe(this, texto -> adminTitle.setText(texto));
 
         findViewById(R.id.listarUsuario).setOnClickListener(v ->
                 startActivity(new Intent(this, ListarUsuarioActivity.class)));

@@ -1,27 +1,38 @@
 package com.example.ta_avance.repository
 
-import com.example.ta_avance.api.AuthApiService
-import com.example.ta_avance.dto.barbero.BarberoResponse
+import com.example.ta_avance.api.service.BarberoApiService
+import com.example.ta_avance.dto.barbero.BarberoDto
 import com.example.ta_avance.dto.barbero.BarberoSimpleResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import retrofit2.Call
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class BarberoRepository @Inject constructor(
-    private val authApiService: AuthApiService
+    private val barberoApiService: BarberoApiService
 ) {
-    fun listarBarberos(): Call<BarberoResponse> =
-        authApiService.listarBarberos()
+    suspend fun listarBarberos(): Result<List<BarberoDto>> = runCatching {
+        val response = barberoApiService.listarBarberos()
+        if (response.isSuccessful) response.body()!!.data
+        else error("Error ${response.code()}: ${response.message()}")
+    }
 
-    fun crearBarbero(dtoBarbero: RequestBody, imagen: MultipartBody.Part): Call<BarberoResponse> =
-        authApiService.crearBarbero(dtoBarbero, imagen)
+    suspend fun crearBarbero(dtoBarbero: RequestBody, imagen: MultipartBody.Part?): Result<List<BarberoDto>> = runCatching {
+        val response = barberoApiService.crearBarbero(dtoBarbero, imagen)
+        if (response.isSuccessful) response.body()!!.data
+        else error("Error ${response.code()}: ${response.message()}")
+    }
 
-    fun eliminarBarbero(id: Int): Call<BarberoResponse> =
-        authApiService.eliminarBarbero(id)
+    suspend fun eliminarBarbero(id: Int): Result<List<BarberoDto>> = runCatching {
+        val response = barberoApiService.eliminarBarbero(id)
+        if (response.isSuccessful) response.body()!!.data
+        else error("Error ${response.code()}: ${response.message()}")
+    }
 
-    fun actualizarBarbero(id: Int, dtoBarbero: RequestBody, imagen: MultipartBody.Part): Call<BarberoSimpleResponse> =
-        authApiService.actualizarBarbero(id, dtoBarbero, imagen)
+    suspend fun actualizarBarbero(id: Int, dtoBarbero: RequestBody, imagen: MultipartBody.Part?): Result<BarberoSimpleResponse> = runCatching {
+        val response = barberoApiService.actualizarBarbero(id, dtoBarbero, imagen)
+        if (response.isSuccessful) response.body()!!
+        else error("Error ${response.code()}: ${response.message()}")
+    }
 }

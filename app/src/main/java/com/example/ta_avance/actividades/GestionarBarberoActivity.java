@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,9 +27,11 @@ import com.example.ta_avance.viewmodel.GestionarBarberoViewModel;
 
 import java.util.List;
 
+import dagger.hilt.android.AndroidEntryPoint;
 
+@AndroidEntryPoint
 public class GestionarBarberoActivity extends AppCompatActivity {
-    // Dentro de la clase:
+
     private GestionarBarberoViewModel viewModel;
     private RecyclerView recyclerView;
     private Button btnAgregarBarbero;
@@ -48,46 +51,48 @@ public class GestionarBarberoActivity extends AppCompatActivity {
         btnAgregarBarbero = findViewById(R.id.btnAgregarBarbero);
         btnAgregarBarbero.setOnClickListener(v -> mostrarPopupNuevoBarbero(v));
 
-        viewModel = new GestionarBarberoViewModel();
+        viewModel = new ViewModelProvider(this).get(GestionarBarberoViewModel.class);
+
+        viewModel.getBarberos().observe(this, barberos -> {
+            listaBarberos = barberos;
+            adapter = new BarberoAdapter(barberos, new BarberoAdapter.OnBarberoClickListener() {
+                @Override
+                public void onActualizar(BarberoDto barbero) {
+                    mostrarPopupActualizarBarbero(barbero);
+                }
+                @Override
+                public void onEliminar(BarberoDto barbero) {
+                    eliminarBarbero(barbero.getBarbero_id());
+                }
+            });
+            recyclerView.setAdapter(adapter);
+        });
+
+        viewModel.getOperacionExitosa().observe(this, msg -> {
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+            cargarLista();
+        });
+
+        viewModel.getError().observe(this, msg ->
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        );
+
         cargarLista();
     }
 
     private void cargarLista() {
-        viewModel.obtenerBarberos(this, new GestionarBarberoViewModel.BarberoCallback() {
-            @Override
-            public void onSuccess(List<BarberoDto> barberos) {
-                listaBarberos = barberos;
-                adapter = new BarberoAdapter(barberos, new BarberoAdapter.OnBarberoClickListener() {
-                    @Override
-                    public void onActualizar(BarberoDto barbero) {
-                        mostrarPopupActualizarBarbero(barbero);
-                    }
-
-                    @Override
-                    public void onEliminar(BarberoDto barbero) {
-                        eliminarBarbero(barbero.getBarbero_id());
-                    }
-                });
-                recyclerView.setAdapter(adapter);
-            }
-
-            @Override
-            public void onError(String mensaje) {
-                Toast.makeText(GestionarBarberoActivity.this, mensaje, Toast.LENGTH_SHORT).show();
-            }
-        });
+        viewModel.obtenerBarberos();
     }
 
     private void mostrarPopupActualizarBarbero(BarberoDto barbero) {
         LayoutInflater inflater = LayoutInflater.from(this);
-        View popupView = inflater.inflate(R.layout.popup_nuevo_barbero, null); // Reutilizamos el mismo layout
+        View popupView = inflater.inflate(R.layout.popup_nuevo_barbero, null);
 
         EditText etNombre = popupView.findViewById(R.id.etNombreNuevoBarbero);
         Button btnCrear = popupView.findViewById(R.id.btnCrearBarbero);
         Button btnCancelar = popupView.findViewById(R.id.btnCancelar);
         Button btnSeleccionarImagen = popupView.findViewById(R.id.btnSeleccionarImagen);
 
-        // Selección de imagen
         btnSeleccionarImagen.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType("image/*");
@@ -120,20 +125,9 @@ public class GestionarBarberoActivity extends AppCompatActivity {
         btnCrear.setOnClickListener(v -> {
             String nuevoNombre = etNombre.getText().toString().trim();
             if (!nuevoNombre.isEmpty()) {
-                GestionarBarberoViewModel viewModel = new GestionarBarberoViewModel();
-                viewModel.actualizarBarbero(this, barbero.getBarbero_id(), nuevoNombre, imagenSeleccionadaUri, new GestionarBarberoViewModel.ActualizarCallback() {
-                    @Override
-                    public void onSuccess(String mensaje) {
-                        Toast.makeText(GestionarBarberoActivity.this, mensaje, Toast.LENGTH_SHORT).show();
-                        popupWindow.dismiss();
-                        cargarLista();
-                    }
-
-                    @Override
-                    public void onError(String mensaje) {
-                        Toast.makeText(GestionarBarberoActivity.this, mensaje, Toast.LENGTH_SHORT).show();
-                    }
-                });
+                viewModel.actualizarBarbero(this, barbero.getBarbero_id(), nuevoNombre, imagenSeleccionadaUri);
+                popupWindow.dismiss();
+                cargarLista();
             } else {
                 etNombre.setError("Campo obligatorio");
             }
@@ -146,7 +140,6 @@ public class GestionarBarberoActivity extends AppCompatActivity {
         LayoutInflater inflater = LayoutInflater.from(this);
         View popupView = inflater.inflate(R.layout.popup_nuevo_barbero, null);
 
-        // Animación fade-in y fondo opaco
         Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
         popupView.startAnimation(fadeIn);
 
@@ -173,7 +166,6 @@ public class GestionarBarberoActivity extends AppCompatActivity {
         Button btnCancelar = popupView.findViewById(R.id.btnCancelar);
         Button btnSeleccionarImagen = popupView.findViewById(R.id.btnSeleccionarImagen);
 
-        // Selección de imagen
         btnSeleccionarImagen.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType("image/*");
@@ -183,8 +175,10 @@ public class GestionarBarberoActivity extends AppCompatActivity {
         btnCrear.setOnClickListener(v -> {
             String nombre = etNombre.getText().toString().trim();
             if (!nombre.isEmpty()) {
-                crearNuevoBarbero(nombre); // Ahora usará imagenSeleccionadaUri
+                viewModel.crearBarbero(this, nombre, imagenSeleccionadaUri);
+                imagenSeleccionadaUri = null;
                 popupWindow.dismiss();
+                cargarLista();
             } else {
                 etNombre.setError("Campo obligatorio");
             }
@@ -198,8 +192,6 @@ public class GestionarBarberoActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_SELECT_IMAGE && resultCode == RESULT_OK && data != null) {
             imagenSeleccionadaUri = data.getData();
-
-            // Mostrar vista previa (si la imagenView del popup sigue activa)
             ImageView ivImagen = findViewById(R.id.ivFotoBarbero);
             if (ivImagen != null) {
                 ivImagen.setImageURI(imagenSeleccionadaUri);
@@ -209,36 +201,12 @@ public class GestionarBarberoActivity extends AppCompatActivity {
     }
 
     private void crearNuevoBarbero(String nombre) {
-        viewModel.crearBarbero(this, nombre, imagenSeleccionadaUri, new GestionarBarberoViewModel.BarberoOperacionCallback() {
-            @Override
-            public void onSuccess(String mensaje) {
-                imagenSeleccionadaUri = null;
-                Toast.makeText(GestionarBarberoActivity.this, mensaje, Toast.LENGTH_SHORT).show();
-                cargarLista();
-            }
-
-            @Override
-            public void onError(String mensaje) {
-                Toast.makeText(GestionarBarberoActivity.this, "En el onError: " + mensaje, Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
+        viewModel.crearBarbero(this, nombre, imagenSeleccionadaUri);
+        imagenSeleccionadaUri = null;
     }
 
     private void eliminarBarbero(int id) {
-        viewModel.eliminarBarbero(this, id, new GestionarBarberoViewModel.BarberoOperacionCallback() {
-            @Override
-            public void onSuccess(String mensaje) {
-                Toast.makeText(GestionarBarberoActivity.this, mensaje, Toast.LENGTH_SHORT).show();
-                cargarLista();
-            }
-
-            @Override
-            public void onError(String mensaje) {
-                Toast.makeText(GestionarBarberoActivity.this, "Error: " + mensaje, Toast.LENGTH_SHORT).show();
-            }
-        });
+        viewModel.eliminarBarbero(id);
+        cargarLista();
     }
-
 }
