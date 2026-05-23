@@ -16,6 +16,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
+import com.example.ta_avance.api.TokenAuthenticator
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -35,11 +36,23 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @AuthRetrofit
+    fun provideAuthRetrofit(): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(BuildConfig.BASE_URL)
+            .client(OkHttpClient.Builder().build())
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
     fun provideOkHttpClient(
-        authInterceptor: AuthInterceptor
+        authInterceptor: AuthInterceptor,
+        tokenAuthenticator: TokenAuthenticator
     ): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
+            .authenticator(tokenAuthenticator)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -63,7 +76,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthApiServiceKt(retrofit: Retrofit): AuthApiServiceKt =
+    fun provideAuthApiServiceKt(@AuthRetrofit retrofit: Retrofit): AuthApiServiceKt =
         retrofit.create(AuthApiServiceKt::class.java)
 
     @Provides
