@@ -2,7 +2,6 @@ package com.example.ta_avance.di
 
 import android.content.Context
 import com.example.ta_avance.BuildConfig
-import com.example.ta_avance.api.AuthApiService
 import com.example.ta_avance.api.AuthInterceptor
 import com.example.ta_avance.api.service.*
 import com.example.ta_avance.util.PreferenciasHelper
@@ -27,12 +26,6 @@ object NetworkModule {
     fun providePreferenciasHelper(
         @ApplicationContext context: Context
     ): PreferenciasHelper = PreferenciasHelper(context)
-
-    @Provides
-    @Singleton
-    fun provideAuthInterceptor(
-        @ApplicationContext context: Context
-    ): AuthInterceptor = AuthInterceptor(context)
 
     @Provides
     @Singleton
@@ -68,11 +61,6 @@ object NetworkModule {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-
-    @Provides
-    @Singleton
-    fun provideAuthApiService(retrofit: Retrofit): AuthApiService =
-        retrofit.create(AuthApiService::class.java)
 
     @Provides
     @Singleton
