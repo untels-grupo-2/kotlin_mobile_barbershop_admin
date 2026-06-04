@@ -27,7 +27,7 @@ class MainViewModel @Inject constructor(
             authRepository.login(request)
                 .onSuccess { body ->
                     val token = body.data?.token ?: return@onSuccess
-                    val refreshToken = body.data.refreshToken
+                    val refreshToken = body.data.refreshToken ?: return@onSuccess
                     val jwt = JWT(token)
                     val role = jwt.getClaim("rol").asString()
 
