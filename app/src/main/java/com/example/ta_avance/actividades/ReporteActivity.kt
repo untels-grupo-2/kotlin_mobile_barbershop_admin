@@ -68,7 +68,7 @@ class ReporteActivity : AppCompatActivity() {
                         is UiState.Success -> {
                             listaServicios.clear()
                             listaServicios.addAll(state.data)
-                            val nombres = mutableListOf("Todos") + state.data.map { it.nombre }
+                            val nombres = reporteViewModel.generarNombresServicios(state.data)
                             spinnerServicio.adapter = ArrayAdapter(this@ReporteActivity, android.R.layout.simple_spinner_dropdown_item, nombres)
                         }
                         is UiState.Error -> Toast.makeText(this@ReporteActivity, state.message, Toast.LENGTH_SHORT).show()
@@ -118,15 +118,11 @@ class ReporteActivity : AppCompatActivity() {
     }
 
     private fun filtrarReporte() {
-        if (fechaInicioSeleccionada == null || fechaFinSeleccionada == null) {
-            Toast.makeText(this, "Selecciona ambas fechas", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val servicioSeleccionado = if (spinnerServicio.selectedItemPosition == 0) null
-        else listaServicios[spinnerServicio.selectedItemPosition - 1].nombre
-
         cardResultado.visibility = View.GONE
-        reporteViewModel.obtenerReporte(fechaInicioSeleccionada!!, fechaFinSeleccionada!!, servicioSeleccionado)
+        val servicioSeleccionado = reporteViewModel.resolverServicioSeleccionado(
+            listaServicios,
+            spinnerServicio.selectedItemPosition
+        )
+        reporteViewModel.obtenerReporte(fechaInicioSeleccionada, fechaFinSeleccionada, servicioSeleccionado)
     }
 }

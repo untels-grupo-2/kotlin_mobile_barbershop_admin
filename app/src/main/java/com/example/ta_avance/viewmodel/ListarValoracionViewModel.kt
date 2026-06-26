@@ -2,6 +2,8 @@ package com.example.ta_avance.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ta_avance.domain.usecase.ConstruirMensajeValoracionUseCase
+import com.example.ta_avance.domain.usecase.GenerarUriWhatsAppUseCase
 import com.example.ta_avance.dto.valoracion.ValoracionDto
 import com.example.ta_avance.repository.ValoracionRepository
 import com.example.ta_avance.ui.state.UiState
@@ -13,7 +15,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ListarValoracionViewModel @Inject constructor(
-    private val valoracionRepository: ValoracionRepository
+    private val valoracionRepository: ValoracionRepository,
+    private val construirMensajeValoracion: ConstruirMensajeValoracionUseCase,
+    private val generarUriWhatsApp: GenerarUriWhatsAppUseCase
 ) : ViewModel() {
 
     private val _valoracionesState = MutableStateFlow<UiState<List<ValoracionDto>>>(UiState.Empty)
@@ -38,5 +42,10 @@ class ListarValoracionViewModel @Inject constructor(
                 .onSuccess { _operacionState.value = UiState.Success(it.message) }
                 .onFailure { _operacionState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
+    }
+
+    fun generarUriWhatsAppValoracion(valoracion: ValoracionDto): String {
+        val mensaje = construirMensajeValoracion(valoracion.usuario_nombre)
+        return generarUriWhatsApp(valoracion.celular, mensaje)
     }
 }

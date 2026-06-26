@@ -45,15 +45,10 @@ class MainActivity : AppCompatActivity() {
         btnOlvideContrasena.startAnimation(fadeIn)
 
         btnIngresarApp.setOnClickListener {
-            val usuario = campoUsuario.text.toString()
-            val contraseña = campoContraseña.text.toString()
-            if (usuario.isEmpty() || contraseña.isEmpty()) {
-                Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
-                if (usuario.isEmpty()) campoUsuario.startAnimation(shakeAnimation)
-                if (contraseña.isEmpty()) campoContraseña.startAnimation(shakeAnimation)
-            } else {
-                mainViewModel.login(usuario, contraseña)
-            }
+            mainViewModel.login(
+                campoUsuario.text.toString(),
+                campoContraseña.text.toString()
+            )
         }
 
         btnOlvideContrasena.setOnClickListener {
@@ -64,7 +59,7 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.loginState.collect { state ->
                     when (state) {
-                        is UiState.Loading -> { /* opcional: mostrar progress bar */ }
+                        is UiState.Loading -> {}
                         is UiState.Success -> {
                             val intent = Intent(this@MainActivity, AdminHomeActivity::class.java).apply {
                                 putExtra("nombre", state.data.first)
@@ -75,11 +70,16 @@ class MainActivity : AppCompatActivity() {
                         }
                         is UiState.Error -> {
                             when (state.message) {
+                                "CAMPOS_VACIOS" -> {
+                                    Toast.makeText(this@MainActivity, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                                    if (campoUsuario.text.isBlank()) campoUsuario.startAnimation(shakeAnimation)
+                                    if (campoContraseña.text.isBlank()) campoContraseña.startAnimation(shakeAnimation)
+                                }
                                 "NO_ADMIN" -> Toast.makeText(this@MainActivity, "Rol no autorizado", Toast.LENGTH_SHORT).show()
                                 else -> Toast.makeText(this@MainActivity, "Error: ${state.message}", Toast.LENGTH_SHORT).show()
                             }
                         }
-                        is UiState.Empty -> { /* estado inicial, no hacer nada */ }
+                        is UiState.Empty -> {}
                     }
                 }
             }

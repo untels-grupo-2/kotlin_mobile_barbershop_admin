@@ -26,14 +26,13 @@ class ReservasIdActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var tituloReservas: TextView
     private lateinit var tvMontoTotal: TextView
-    private var usuarioId: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_reservas_id)
 
-        usuarioId = intent.getLongExtra("usuarioId", -1)
+        val usuarioId = intent.getLongExtra("usuarioId", -1)
         if (usuarioId == -1L) {
             Toast.makeText(this, "ID de usuario inválido", Toast.LENGTH_SHORT).show()
             finish()
@@ -52,19 +51,14 @@ class ReservasIdActivity : AppCompatActivity() {
                 viewModel.reservasState.collect { state ->
                     when (state) {
                         is UiState.Success -> {
-                            val reservas = state.data
-                            recyclerView.adapter = ReservaAdapter(reservas, object : ReservaAdapter.OnReservaClickListener {
+                            recyclerView.adapter = ReservaAdapter(state.data, object : ReservaAdapter.OnReservaClickListener {
                                 override fun onVerDetallesClick(reserva: DtoReserva) {}
                                 override fun onReservaRealizadaClick(reserva: DtoReserva) {}
                             }, "REALIZADA")
 
-                            if (reservas.isNotEmpty()) {
-                                tvMontoTotal.text = "Monto Total: S/ ${reservas[0].montoTotal}"
-                                tituloReservas.text = "Reservas de ${reservas[0].usuarioNombre}"
-                            } else {
-                                tvMontoTotal.text = "Monto Total: S/ 0"
-                                tituloReservas.text = "Reservas del cliente"
-                            }
+                            val (titulo, monto) = viewModel.calcularResumenReservas(state.data)
+                            tituloReservas.text = titulo
+                            tvMontoTotal.text = monto
                         }
                         is UiState.Error -> Toast.makeText(this@ReservasIdActivity, state.message, Toast.LENGTH_SHORT).show()
                         else -> {}

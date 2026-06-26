@@ -39,6 +39,10 @@ class GestionarBarberoViewModel @Inject constructor(
     }
 
     fun crearBarbero(context: Context, nombre: String, imagenUri: Uri?) {
+        if (nombre.isBlank()) {
+            _operacionState.value = UiState.Error("El nombre del barbero es obligatorio")
+            return
+        }
         val dtoBody = buildJsonBody(BarberoRequest(nombre))
         val imagenPart = buildImagePart(context, imagenUri) ?: return
         _operacionState.value = UiState.Loading
@@ -50,6 +54,10 @@ class GestionarBarberoViewModel @Inject constructor(
     }
 
     fun actualizarBarbero(context: Context, id: Int, nuevoNombre: String, imagenUri: Uri?) {
+        if (nuevoNombre.isBlank()) {
+            _operacionState.value = UiState.Error("El nombre del barbero es obligatorio")
+            return
+        }
         val dtoBody = buildJsonBody(BarberoRequest(nuevoNombre))
         val imagenPart = buildImagePart(context, imagenUri)
         _operacionState.value = UiState.Loading

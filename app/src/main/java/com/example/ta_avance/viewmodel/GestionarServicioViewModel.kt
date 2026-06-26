@@ -8,6 +8,7 @@ import com.example.ta_avance.dto.servicio.ServicioDto
 import com.example.ta_avance.dto.servicio.ServicioRequest
 import com.example.ta_avance.repository.ServicioRepository
 import com.example.ta_avance.ui.state.UiState
+import com.example.ta_avance.util.AppConstants
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,13 @@ class GestionarServicioViewModel @Inject constructor(
     private val _operacionState = MutableStateFlow<UiState<String>>(UiState.Empty)
     val operacionState: StateFlow<UiState<String>> = _operacionState
 
+    val tiposServicio: List<String> get() = AppConstants.TIPO_SERVICIO.keys.toList()
+
+    fun obtenerIdTipoServicio(nombre: String): Int = AppConstants.TIPO_SERVICIO[nombre] ?: 1
+
+    fun obtenerIndicesTipoServicio(tipoServicioId: Int): Int =
+        AppConstants.TIPO_SERVICIO.values.toList().indexOfFirst { it == tipoServicioId }.coerceAtLeast(0)
+
     fun obtenerServicios() {
         _listState.value = UiState.Loading
         viewModelScope.launch {
@@ -38,7 +46,12 @@ class GestionarServicioViewModel @Inject constructor(
         }
     }
 
-    fun crearServicio(context: Context, request: ServicioRequest, imagenUri: Uri?) {
+    fun crearServicio(context: Context, nombre: String, precioStr: String, descripcion: String, tipoNombre: String, imagenUri: Uri?) {
+        if (nombre.isBlank() || precioStr.isBlank() || descripcion.isBlank()) {
+            _operacionState.value = UiState.Error("Completa todos los campos")
+            return
+        }
+        val request = ServicioRequest(nombre, precioStr.toDouble(), descripcion, obtenerIdTipoServicio(tipoNombre))
         val dtoBody = buildJsonBody(request)
         val imagenPart = buildImagePart(context, imagenUri) ?: return
         _operacionState.value = UiState.Loading
@@ -49,7 +62,12 @@ class GestionarServicioViewModel @Inject constructor(
         }
     }
 
-    fun actualizarServicio(context: Context, id: Int, request: ServicioRequest, imagenUri: Uri?) {
+    fun actualizarServicio(context: Context, id: Int, nombre: String, precioStr: String, descripcion: String, tipoNombre: String, imagenUri: Uri?) {
+        if (nombre.isBlank() || precioStr.isBlank() || descripcion.isBlank()) {
+            _operacionState.value = UiState.Error("Completa todos los campos")
+            return
+        }
+        val request = ServicioRequest(nombre, precioStr.toDouble(), descripcion, obtenerIdTipoServicio(tipoNombre))
         val dtoBody = buildJsonBody(request)
         val imagenPart = buildImagePart(context, imagenUri)
         _operacionState.value = UiState.Loading

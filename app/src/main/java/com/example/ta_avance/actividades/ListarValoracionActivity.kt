@@ -19,7 +19,6 @@ import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.ListarValoracionViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import java.net.URLEncoder
 
 @AndroidEntryPoint
 class ListarValoracionActivity : AppCompatActivity() {
@@ -34,7 +33,6 @@ class ListarValoracionActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.recyclerViewValoraciones)
         recyclerView.layoutManager = LinearLayoutManager(this)
-
         viewModel = ViewModelProvider(this).get(ListarValoracionViewModel::class.java)
 
         lifecycleScope.launch {
@@ -43,8 +41,8 @@ class ListarValoracionActivity : AppCompatActivity() {
                     when (state) {
                         is UiState.Success -> {
                             recyclerView.adapter = ValoracionAdapter(state.data) { valoracion ->
-                                enviarWsp(valoracion)
-                                responderValoracion(valoracion)
+                                abrirWhatsApp(viewModel.generarUriWhatsAppValoracion(valoracion))
+                                viewModel.responderValoracion(valoracion.valoracion_id)
                             }
                         }
                         is UiState.Error -> Toast.makeText(this@ListarValoracionActivity, state.message, Toast.LENGTH_SHORT).show()
@@ -72,20 +70,11 @@ class ListarValoracionActivity : AppCompatActivity() {
         viewModel.obtenerValoraciones()
     }
 
-    private fun enviarWsp(valoracion: ValoracionDto) {
-        val mensaje = """
-            Hola *${valoracion.usuario_nombre}*, muchas gracias por tu opinión.
-            Nos ayuda a mejorar nuestro servicio.
-        """.trimIndent()
+    private fun abrirWhatsApp(uri: String) {
         try {
-            val uri = "https://wa.me/51${valoracion.celular}?text=${URLEncoder.encode(mensaje, "UTF-8")}"
             startActivity(Intent(Intent.ACTION_VIEW).apply { data = Uri.parse(uri) })
         } catch (e: Exception) {
             Toast.makeText(this, "No se pudo abrir WhatsApp", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun responderValoracion(valoracion: ValoracionDto) {
-        viewModel.responderValoracion(valoracion.valoracion_id)
     }
 }
