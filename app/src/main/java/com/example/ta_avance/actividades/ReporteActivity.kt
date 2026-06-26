@@ -136,10 +136,7 @@ class ReporteActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnFiltrarReporte).setOnClickListener { filtrarReporte() }
 
         btnDescargarPdf.setOnClickListener {
-            val servicioSeleccionado = reporteViewModel.resolverServicioSeleccionado(
-                listaServicios, spinnerServicio.selectedItemPosition
-            )
-            reporteViewModel.descargarReporte(this, fechaInicioSeleccionada, fechaFinSeleccionada, servicioSeleccionado)
+            reporteViewModel.descargarReporte(this, fechaInicioSeleccionada, fechaFinSeleccionada)
         }
 
         btnCompartirPdf.setOnClickListener {

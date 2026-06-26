@@ -15,10 +15,9 @@ interface ReporteApiService {
     ): Response<DtoReporteResponse>
 
     @Streaming
-    @GET("api/reserva/descargarReporte")
+    @GET("api/reportes/horario")
     suspend fun descargarReportePdf(
         @Query("fechaInicio") fechaInicio: LocalDate,
-        @Query("fechaFin") fechaFin: LocalDate,
-        @Query("servicio") servicio: String = ""
+        @Query("fechaFin") fechaFin: LocalDate
     ): Response<ResponseBody>
 }

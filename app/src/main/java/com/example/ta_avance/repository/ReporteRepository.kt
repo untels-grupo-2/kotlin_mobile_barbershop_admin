@@ -22,10 +22,9 @@ class ReporteRepository @Inject constructor(
     suspend fun descargarReportePdf(
         context: Context,
         fechaInicio: LocalDate,
-        fechaFin: LocalDate,
-        servicio: String
+        fechaFin: LocalDate
     ): Result<File> = runCatching {
-        val response = reporteApiService.descargarReportePdf(fechaInicio, fechaFin, servicio)
+        val response = reporteApiService.descargarReportePdf(fechaInicio, fechaFin)
         if (!response.isSuccessful) error("Error ${response.code()}: ${response.message()}")
         val body = response.body()!!
         val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)

@@ -2,7 +2,6 @@ package com.example.ta_avance.viewmodel
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -42,14 +41,14 @@ class ReporteViewModel @Inject constructor(
         }
     }
 
-    fun descargarReporte(context: Context, fechaInicio: LocalDate?, fechaFin: LocalDate?, servicio: String?) {
+    fun descargarReporte(context: Context, fechaInicio: LocalDate?, fechaFin: LocalDate?) {
         if (fechaInicio == null || fechaFin == null) {
             _descargaState.value = UiState.Error("Selecciona ambas fechas para descargar")
             return
         }
         _descargaState.value = UiState.Loading
         viewModelScope.launch {
-            reporteRepository.descargarReportePdf(context, fechaInicio, fechaFin, servicio ?: "")
+            reporteRepository.descargarReportePdf(context, fechaInicio, fechaFin)
                 .onSuccess { _descargaState.value = UiState.Success(it) }
                 .onFailure { _descargaState.value = UiState.Error(it.message ?: "Error al descargar") }
         }
