@@ -14,14 +14,19 @@ import android.widget.ImageView
 import android.widget.PopupWindow
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ta_avance.R
 import com.example.ta_avance.adapters.BarberoAdapter
 import com.example.ta_avance.dto.barbero.BarberoDto
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.GestionarBarberoViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class GestionarBarberoActivity : AppCompatActivity() {
@@ -47,24 +52,40 @@ class GestionarBarberoActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this).get(GestionarBarberoViewModel::class.java)
 
-        viewModel.barberos.observe(this) { barberos ->
-            recyclerView.adapter = BarberoAdapter(barberos, object : BarberoAdapter.OnBarberoClickListener {
-                override fun onActualizar(barbero: BarberoDto) {
-                    mostrarPopupActualizarBarbero(barbero)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.listState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            recyclerView.adapter = BarberoAdapter(state.data, object : BarberoAdapter.OnBarberoClickListener {
+                                override fun onActualizar(barbero: BarberoDto) {
+                                    mostrarPopupActualizarBarbero(barbero)
+                                }
+                                override fun onEliminar(barbero: BarberoDto) {
+                                    eliminarBarbero(barbero.barbero_id)
+                                }
+                            })
+                        }
+                        is UiState.Error -> Toast.makeText(this@GestionarBarberoActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
                 }
-                override fun onEliminar(barbero: BarberoDto) {
-                    eliminarBarbero(barbero.barbero_id)
-                }
-            })
+            }
         }
 
-        viewModel.operacionExitosa.observe(this) { msg ->
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-            cargarLista()
-        }
-
-        viewModel.error.observe(this) { msg ->
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.operacionState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            Toast.makeText(this@GestionarBarberoActivity, state.data, Toast.LENGTH_SHORT).show()
+                            cargarLista()
+                        }
+                        is UiState.Error -> Toast.makeText(this@GestionarBarberoActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
+                }
+            }
         }
 
         cargarLista()
@@ -103,7 +124,6 @@ class GestionarBarberoActivity : AppCompatActivity() {
             if (nuevoNombre.isNotEmpty()) {
                 viewModel.actualizarBarbero(this, barbero.barbero_id, nuevoNombre, imagenSeleccionadaUri)
                 popupWindow.dismiss()
-                cargarLista()
             } else {
                 etNombre.error = "Campo obligatorio"
             }
@@ -139,7 +159,6 @@ class GestionarBarberoActivity : AppCompatActivity() {
                 viewModel.crearBarbero(this, nombre, imagenSeleccionadaUri)
                 imagenSeleccionadaUri = null
                 popupWindow.dismiss()
-                cargarLista()
             } else {
                 etNombre.error = "Campo obligatorio"
             }
@@ -161,6 +180,5 @@ class GestionarBarberoActivity : AppCompatActivity() {
 
     private fun eliminarBarbero(id: Int) {
         viewModel.eliminarBarbero(id)
-        cargarLista()
     }
 }

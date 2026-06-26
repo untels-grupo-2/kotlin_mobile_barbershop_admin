@@ -16,15 +16,20 @@ import android.widget.PopupWindow
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ta_avance.R
 import com.example.ta_avance.adapters.ServicioAdapter
 import com.example.ta_avance.dto.servicio.ServicioDto
 import com.example.ta_avance.dto.servicio.ServicioRequest
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.GestionarServicioViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class GestionarServicioActivity : AppCompatActivity() {
@@ -57,23 +62,40 @@ class GestionarServicioActivity : AppCompatActivity() {
             mostrarPopupNuevoServicio(it)
         }
 
-        viewModel.servicios.observe(this) { servicios ->
-            recyclerView.adapter = ServicioAdapter(servicios, object : ServicioAdapter.OnServicioClickListener {
-                override fun onActualizar(servicio: ServicioDto) {
-                    mostrarPopupActualizarServicio(servicio)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.listState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            recyclerView.adapter = ServicioAdapter(state.data, object : ServicioAdapter.OnServicioClickListener {
+                                override fun onActualizar(servicio: ServicioDto) {
+                                    mostrarPopupActualizarServicio(servicio)
+                                }
+                                override fun onEliminar(servicio: ServicioDto) {
+                                    eliminarServicio(servicio.servicio_id)
+                                }
+                            })
+                        }
+                        is UiState.Error -> Toast.makeText(this@GestionarServicioActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
                 }
-                override fun onEliminar(servicio: ServicioDto) {
-                    eliminarServicio(servicio.servicio_id)
-                }
-            })
+            }
         }
 
-        viewModel.operacionExitosa.observe(this) { msg ->
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-        }
-
-        viewModel.error.observe(this) { msg ->
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.operacionState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            Toast.makeText(this@GestionarServicioActivity, state.data, Toast.LENGTH_SHORT).show()
+                            cargarLista()
+                        }
+                        is UiState.Error -> Toast.makeText(this@GestionarServicioActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
+                }
+            }
         }
 
         cargarLista()
@@ -127,7 +149,6 @@ class GestionarServicioActivity : AppCompatActivity() {
                 viewModel.crearServicio(this, request, imagenSeleccionadaUri)
                 imagenSeleccionadaUri = null
                 popupWindow.dismiss()
-                cargarLista()
             } else {
                 Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
             }
@@ -175,7 +196,6 @@ class GestionarServicioActivity : AppCompatActivity() {
                     val request = ServicioRequest(nombre, precioStr.toDouble(), descripcion, tipoServicioMap[tipoSeleccionado]!!)
                     viewModel.actualizarServicio(this@GestionarServicioActivity, servicio.servicio_id, request, imagenSeleccionadaUri)
                     popupWindow.dismiss()
-                    cargarLista()
                 } else {
                     Toast.makeText(this@GestionarServicioActivity, "Completa todos los campos", Toast.LENGTH_SHORT).show()
                 }
@@ -198,6 +218,5 @@ class GestionarServicioActivity : AppCompatActivity() {
 
     private fun eliminarServicio(id: Int) {
         viewModel.eliminarServicio(id)
-        cargarLista()
     }
 }

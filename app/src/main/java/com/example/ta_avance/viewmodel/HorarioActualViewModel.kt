@@ -3,11 +3,13 @@ package com.example.ta_avance.viewmodel
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ta_avance.repository.HorarioRepository
+import com.example.ta_avance.ui.state.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -21,11 +23,14 @@ class HorarioActualViewModel @Inject constructor(
     private val horarioRepository: HorarioRepository
 ) : ViewModel() {
 
-    val horarios = MutableLiveData<Map<String, Map<String, List<String>>>>()
-    val error = MutableLiveData<String>()
-    val pdfListo = MutableLiveData<Boolean>()
+    private val _horariosState = MutableStateFlow<UiState<Map<String, Map<String, List<String>>>>>(UiState.Empty)
+    val horariosState: StateFlow<UiState<Map<String, Map<String, List<String>>>>> = _horariosState
+
+    private val _exportState = MutableStateFlow<UiState<Boolean>>(UiState.Empty)
+    val exportState: StateFlow<UiState<Boolean>> = _exportState
 
     fun cargarHorarios() {
+        _horariosState.value = UiState.Loading
         viewModelScope.launch {
             horarioRepository.obtenerHorarioActual()
                 .onSuccess { wrapper ->
@@ -37,9 +42,9 @@ class HorarioActualViewModel @Inject constructor(
                         }
                         semana[dia] = turnos
                     }
-                    horarios.postValue(semana)
+                    _horariosState.value = UiState.Success(semana)
                 }
-                .onFailure { error.postValue(it.message) }
+                .onFailure { _horariosState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
     }
 
@@ -48,6 +53,7 @@ class HorarioActualViewModel @Inject constructor(
         val lunes = hoy.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         val domingo = hoy.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
 
+        _exportState.value = UiState.Loading
         viewModelScope.launch {
             horarioRepository.exportarHorario(lunes, domingo)
                 .onSuccess { body ->
@@ -63,12 +69,12 @@ class HorarioActualViewModel @Inject constructor(
                             flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
                         }
                         context.startActivity(intent)
-                        pdfListo.postValue(true)
+                        _exportState.value = UiState.Success(true)
                     } catch (e: Exception) {
-                        error.postValue("Error al guardar el PDF")
+                        _exportState.value = UiState.Error("Error al guardar el PDF")
                     }
                 }
-                .onFailure { error.postValue(it.message) }
+                .onFailure { _exportState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
     }
 }

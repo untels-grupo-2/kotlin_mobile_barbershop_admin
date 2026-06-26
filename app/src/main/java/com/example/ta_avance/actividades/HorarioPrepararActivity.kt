@@ -15,11 +15,16 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.ta_avance.R
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.HorarioPrepararViewModel
 import com.google.android.material.button.MaterialButton
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class HorarioPrepararActivity : AppCompatActivity() {
@@ -38,35 +43,43 @@ class HorarioPrepararActivity : AppCompatActivity() {
         containerDias = findViewById(R.id.containerDias)
         viewModel = ViewModelProvider(this).get(HorarioPrepararViewModel::class.java)
 
-        viewModel.dias.observe(this) { dias ->
-            containerDias.removeAllViews()
-            for (dia in dias) {
-                val diaButton = MaterialButton(this).apply {
-                    text = dia
-                    setIcon(ContextCompat.getDrawable(this@HorarioPrepararActivity, R.drawable.ic_calendar_day))
-                    setIconTintResource(android.R.color.white)
-                    iconPadding = 16
-                    setTextColor(ContextCompat.getColor(this@HorarioPrepararActivity, android.R.color.white))
-                    isAllCaps = false
-                    typeface = ResourcesCompat.getFont(this@HorarioPrepararActivity, R.font.oswald_bold)
-                    backgroundTintList = ContextCompat.getColorStateList(this@HorarioPrepararActivity, R.color.barber_black_deep)
-                    cornerRadius = 24
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply { setMargins(0, 16, 0, 0) }
-                    setOnClickListener { mostrarPopupDia(dia) }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.dias.collect { dias ->
+                    containerDias.removeAllViews()
+                    for (dia in dias) {
+                        val diaButton = MaterialButton(this@HorarioPrepararActivity).apply {
+                            text = dia
+                            setIcon(ContextCompat.getDrawable(this@HorarioPrepararActivity, R.drawable.ic_calendar_day))
+                            setIconTintResource(android.R.color.white)
+                            iconPadding = 16
+                            setTextColor(ContextCompat.getColor(this@HorarioPrepararActivity, android.R.color.white))
+                            isAllCaps = false
+                            typeface = ResourcesCompat.getFont(this@HorarioPrepararActivity, R.font.oswald_bold)
+                            backgroundTintList = ContextCompat.getColorStateList(this@HorarioPrepararActivity, R.color.barber_black_deep)
+                            cornerRadius = 24
+                            layoutParams = LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                            ).apply { setMargins(0, 16, 0, 0) }
+                            setOnClickListener { mostrarPopupDia(dia) }
+                        }
+                        containerDias.addView(diaButton)
+                    }
                 }
-                containerDias.addView(diaButton)
             }
         }
 
-        viewModel.operacionExitosa.observe(this) { msg ->
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-        }
-
-        viewModel.error.observe(this) { msg ->
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.operacionState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> Toast.makeText(this@HorarioPrepararActivity, state.data, Toast.LENGTH_SHORT).show()
+                        is UiState.Error -> Toast.makeText(this@HorarioPrepararActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
+                }
+            }
         }
 
         findViewById<Button>(R.id.btnConfirmarHorario).setOnClickListener {
@@ -90,9 +103,9 @@ class HorarioPrepararActivity : AppCompatActivity() {
         contenedorTurnos.removeAllViews()
 
         val turnos = viewModel.turnos.value
-        val barberos = viewModel.barberos.value
+        val barberos = (viewModel.barberosState.value as? UiState.Success)?.data
 
-        if (turnos == null || barberos == null) {
+        if (barberos == null) {
             Toast.makeText(this, "Error cargando turnos o barberos", Toast.LENGTH_SHORT).show()
             return
         }

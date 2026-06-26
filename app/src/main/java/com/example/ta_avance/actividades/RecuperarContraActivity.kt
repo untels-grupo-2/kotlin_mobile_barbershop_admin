@@ -6,10 +6,15 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.ta_avance.R
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.RecuperarContraViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class RecuperarContraActivity : AppCompatActivity() {
@@ -49,13 +54,19 @@ class RecuperarContraActivity : AppCompatActivity() {
             finish()
         }
 
-        viewModel.resultado.observe(this) { mensaje ->
-            Toast.makeText(this, mensaje, Toast.LENGTH_LONG).show()
-            finish()
-        }
-
-        viewModel.error.observe(this) { mensaje ->
-            Toast.makeText(this, mensaje, Toast.LENGTH_LONG).show()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.recuperarState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            Toast.makeText(this@RecuperarContraActivity, state.data, Toast.LENGTH_LONG).show()
+                            finish()
+                        }
+                        is UiState.Error -> Toast.makeText(this@RecuperarContraActivity, state.message, Toast.LENGTH_LONG).show()
+                        else -> {}
+                    }
+                }
+            }
         }
     }
 }

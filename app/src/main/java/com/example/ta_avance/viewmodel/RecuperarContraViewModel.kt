@@ -1,11 +1,13 @@
 package com.example.ta_avance.viewmodel
 
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ta_avance.dto.recuperacion.RecuperacionRequest
 import com.example.ta_avance.repository.AuthRepository
+import com.example.ta_avance.ui.state.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -14,14 +16,15 @@ class RecuperarContraViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    val resultado = MutableLiveData<String>()
-    val error = MutableLiveData<String>()
+    private val _recuperarState = MutableStateFlow<UiState<String>>(UiState.Empty)
+    val recuperarState: StateFlow<UiState<String>> = _recuperarState
 
     fun recuperar(usuario: String, correo: String) {
+        _recuperarState.value = UiState.Loading
         viewModelScope.launch {
             authRepository.recuperarContraseña(RecuperacionRequest(usuario, correo))
-                .onSuccess { resultado.postValue("Correo enviado exitosamente") }
-                .onFailure { error.postValue(it.message) }
+                .onSuccess { _recuperarState.value = UiState.Success("Correo enviado exitosamente") }
+                .onFailure { _recuperarState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
     }
 }

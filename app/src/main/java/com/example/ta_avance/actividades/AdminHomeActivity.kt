@@ -13,11 +13,15 @@ import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.ta_avance.R
 import com.example.ta_avance.viewmodel.AdminHomeViewModel
 import com.google.android.material.button.MaterialButton
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class AdminHomeActivity : AppCompatActivity() {
@@ -36,8 +40,12 @@ class AdminHomeActivity : AppCompatActivity() {
         val apellido = intent.getStringExtra("apellido") ?: ""
         viewModel.setNombreYApellido(nombre, apellido)
 
-        viewModel.nombreCompleto.observe(this) { texto ->
-            adminTitle.text = texto
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.nombreCompleto.collect { texto ->
+                    adminTitle.text = texto
+                }
+            }
         }
 
         findViewById<View>(R.id.listarUsuario).setOnClickListener {

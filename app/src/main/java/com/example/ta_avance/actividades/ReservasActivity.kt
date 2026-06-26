@@ -17,7 +17,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -25,6 +28,7 @@ import com.example.ta_avance.R
 import com.example.ta_avance.adapters.ReservaAdapter
 import com.example.ta_avance.dto.login.LoginRequest
 import com.example.ta_avance.dto.reserva.DtoReserva
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.ReservasViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.datepicker.CalendarConstraints
@@ -34,6 +38,7 @@ import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.time.DayOfWeek
 import java.time.Instant
@@ -74,26 +79,40 @@ class ReservasActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this).get(ReservasViewModel::class.java)
 
-        viewModel.reservas.observe(this) { reservas ->
-            val estado = spinnerEstado.selectedItem.toString()
-            recyclerView.adapter = ReservaAdapter(reservas, object : ReservaAdapter.OnReservaClickListener {
-                override fun onVerDetallesClick(reserva: DtoReserva) {
-                    mostrarPopupDetalle(reserva)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.reservasState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            val estado = spinnerEstado.selectedItem.toString()
+                            recyclerView.adapter = ReservaAdapter(state.data, object : ReservaAdapter.OnReservaClickListener {
+                                override fun onVerDetallesClick(reserva: DtoReserva) {
+                                    mostrarPopupDetalle(reserva)
+                                }
+                                override fun onReservaRealizadaClick(reserva: DtoReserva) {
+                                    viewModel.cambiarEstadoReserva(reserva.reservaId, "REALIZADA", "Reserva completada correctamente")
+                                }
+                            }, estado)
+                        }
+                        is UiState.Error -> Toast.makeText(this@ReservasActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
                 }
-                override fun onReservaRealizadaClick(reserva: DtoReserva) {
-                    viewModel.cambiarEstadoReserva(reserva.reservaId, "REALIZADA", "Reserva completada correctamente")
-                }
-            }, estado)
+            }
         }
 
-        viewModel.mensajeError.observe(this) { error ->
-            Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
-        }
-
-        viewModel.cambioEstadoExitoso.observe(this) { exitoso ->
-            if (exitoso == true) {
-                Toast.makeText(this, "Estado actualizado", Toast.LENGTH_SHORT).show()
-                cargarReservas()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.cambioEstadoState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            Toast.makeText(this@ReservasActivity, "Estado actualizado", Toast.LENGTH_SHORT).show()
+                            cargarReservas()
+                        }
+                        is UiState.Error -> Toast.makeText(this@ReservasActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
+                }
             }
         }
 
@@ -185,10 +204,12 @@ class ReservasActivity : AppCompatActivity() {
         popupView.findViewById<MaterialButton>(R.id.btnConfirmarReserva).setOnClickListener {
             dialog.dismiss()
             viewModel.obtenerUsuarioPorId(reserva.usuarioId)
-            viewModel.usuarioPorIdLiveData.observe(this) { usuario ->
-                if (usuario != null) {
-                    enviarWsp(usuario, reserva)
-                    viewModel.cambiarEstadoReserva(reserva.reservaId, "CONFIRMADA", "Reserva confirmada por el administrador.")
+            lifecycleScope.launch {
+                viewModel.usuarioState.collect { state ->
+                    if (state is UiState.Success) {
+                        enviarWsp(state.data, reserva)
+                        viewModel.cambiarEstadoReserva(reserva.reservaId, "CONFIRMADA", "Reserva confirmada por el administrador.")
+                    }
                 }
             }
         }
@@ -217,11 +238,11 @@ class ReservasActivity : AppCompatActivity() {
     private fun enviarWsp(usuario: LoginRequest, reserva: DtoReserva) {
         val mensaje = """
             Hola *${usuario.nombre}*, tu reserva ha sido confirmada 🎉
-            
+
             📅 Fecha: *${reserva.fechaReserva}*
             🕒 Horario: *${reserva.horarioRango}*
             💇 Servicio: *${reserva.servicioNombre}*
-            
+
             Por favor, acude puntual a tu cita. ¡Gracias por elegirnos! 💈
         """.trimIndent()
 

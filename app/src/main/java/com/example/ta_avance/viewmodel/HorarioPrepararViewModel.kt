@@ -3,15 +3,17 @@ package com.example.ta_avance.viewmodel
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ta_avance.dto.barbero.BarberoDto
 import com.example.ta_avance.repository.BarberoRepository
 import com.example.ta_avance.repository.HorarioRepository
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.util.DiaSemana
 import com.example.ta_avance.util.TurnoTipo
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -26,39 +28,41 @@ class HorarioPrepararViewModel @Inject constructor(
     private val horarioRepository: HorarioRepository
 ) : ViewModel() {
 
-    val dias = MutableLiveData<List<String>>(
-        DiaSemana.entries.map { it.name }
-    )
-    val turnos = MutableLiveData<List<String>>(
-        TurnoTipo.entries.map { it.name }
-    )
-    val barberos = MutableLiveData<List<BarberoDto>>()
-    val error = MutableLiveData<String>()
-    val operacionExitosa = MutableLiveData<String>()
+    val dias = MutableStateFlow<List<String>>(DiaSemana.entries.map { it.name })
+    val turnos = MutableStateFlow<List<String>>(TurnoTipo.entries.map { it.name })
+
+    private val _barberosState = MutableStateFlow<UiState<List<BarberoDto>>>(UiState.Empty)
+    val barberosState: StateFlow<UiState<List<BarberoDto>>> = _barberosState
+
+    private val _operacionState = MutableStateFlow<UiState<String>>(UiState.Empty)
+    val operacionState: StateFlow<UiState<String>> = _operacionState
 
     fun cargarBarberos() {
+        _barberosState.value = UiState.Loading
         viewModelScope.launch {
             barberoRepository.listarBarberos()
-                .onSuccess { barberos.postValue(it) }
-                .onFailure { error.postValue(it.message) }
+                .onSuccess { _barberosState.value = UiState.Success(it) }
+                .onFailure { _barberosState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
     }
 
     fun guardarTurnosDia(dia: String, turnosPorTipo: Map<Long, List<Long>>) {
+        _operacionState.value = UiState.Loading
         viewModelScope.launch {
             horarioRepository.actualizarTurnosDia(
                 com.example.ta_avance.dto.horario.TurnosDiaRequest(dia, turnosPorTipo)
             )
-                .onSuccess { operacionExitosa.postValue("${it.message} para el día ${dia.lowercase()}") }
-                .onFailure { error.postValue("Error al guardar turnos") }
+                .onSuccess { _operacionState.value = UiState.Success("${it.message} para el día ${dia.lowercase()}") }
+                .onFailure { _operacionState.value = UiState.Error("Error al guardar turnos") }
         }
     }
 
     fun confirmarHorario() {
+        _operacionState.value = UiState.Loading
         viewModelScope.launch {
             horarioRepository.confirmarHorario()
-                .onSuccess { operacionExitosa.postValue(it.message) }
-                .onFailure { error.postValue("Error al confirmar horario") }
+                .onSuccess { _operacionState.value = UiState.Success(it.message) }
+                .onFailure { _operacionState.value = UiState.Error("Error al confirmar horario") }
         }
     }
 
@@ -83,10 +87,10 @@ class HorarioPrepararViewModel @Inject constructor(
                         }
                         context.startActivity(intent)
                     } catch (e: Exception) {
-                        error.postValue("Error al guardar el PDF")
+                        _operacionState.value = UiState.Error("Error al guardar el PDF")
                     }
                 }
-                .onFailure { error.postValue(it.message) }
+                .onFailure { _operacionState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
     }
 }

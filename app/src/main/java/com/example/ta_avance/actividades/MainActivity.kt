@@ -7,10 +7,15 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.ta_avance.R
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -55,19 +60,28 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, RecuperarContraActivity::class.java))
         }
 
-        mainViewModel.loginStatus.observe(this) { status ->
-            when (status) {
-                "SUCCESS" -> {
-                    val intent = Intent(this, AdminHomeActivity::class.java).apply {
-                        putExtra("nombre", mainViewModel.nombre.value)
-                        putExtra("apellido", mainViewModel.apellido.value)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                mainViewModel.loginState.collect { state ->
+                    when (state) {
+                        is UiState.Loading -> { /* opcional: mostrar progress bar */ }
+                        is UiState.Success -> {
+                            val intent = Intent(this@MainActivity, AdminHomeActivity::class.java).apply {
+                                putExtra("nombre", state.data.first)
+                                putExtra("apellido", state.data.second)
+                            }
+                            startActivity(intent)
+                            finish()
+                        }
+                        is UiState.Error -> {
+                            when (state.message) {
+                                "NO_ADMIN" -> Toast.makeText(this@MainActivity, "Rol no autorizado", Toast.LENGTH_SHORT).show()
+                                else -> Toast.makeText(this@MainActivity, "Error: ${state.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        is UiState.Empty -> { /* estado inicial, no hacer nada */ }
                     }
-                    startActivity(intent)
-                    finish()
                 }
-                "NO_ADMIN" -> Toast.makeText(this, "Rol no autorizado", Toast.LENGTH_SHORT).show()
-                "INVALID" -> Toast.makeText(this, "Usuario o contraseña incorrectos", Toast.LENGTH_SHORT).show()
-                else -> Toast.makeText(this, "Error: $status", Toast.LENGTH_SHORT).show()
             }
         }
     }

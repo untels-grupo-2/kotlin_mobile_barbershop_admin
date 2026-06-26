@@ -6,14 +6,19 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ta_avance.R
 import com.example.ta_avance.adapters.UsuarioAdapter
 import com.example.ta_avance.dto.login.LoginRequest
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.ListarUsuarioViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import java.net.URLEncoder
 
 @AndroidEntryPoint
@@ -35,22 +40,28 @@ class ListarUsuarioActivity : AppCompatActivity() {
             startActivity(Intent(this, RegistroUsuarioActivity::class.java))
         }
 
-        viewModel.usuarios.observe(this) { usuarios ->
-            recyclerView.adapter = UsuarioAdapter(usuarios, object : UsuarioAdapter.OnUsuarioClickListener {
-                override fun onMessageWsp(usuario: LoginRequest) {
-                    enviarWsp(usuario)
-                }
-                override fun onVerReservas(usuario: LoginRequest) {
-                    val intent = Intent(this@ListarUsuarioActivity, ReservasIdActivity::class.java).apply {
-                        putExtra("usuarioId", usuario.usuario_id)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.usuariosState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            recyclerView.adapter = UsuarioAdapter(state.data, object : UsuarioAdapter.OnUsuarioClickListener {
+                                override fun onMessageWsp(usuario: LoginRequest) {
+                                    enviarWsp(usuario)
+                                }
+                                override fun onVerReservas(usuario: LoginRequest) {
+                                    val intent = Intent(this@ListarUsuarioActivity, ReservasIdActivity::class.java).apply {
+                                        putExtra("usuarioId", usuario.usuario_id)
+                                    }
+                                    startActivity(intent)
+                                }
+                            })
+                        }
+                        is UiState.Error -> Toast.makeText(this@ListarUsuarioActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
                     }
-                    startActivity(intent)
                 }
-            })
-        }
-
-        viewModel.error.observe(this) { msg ->
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+            }
         }
 
         viewModel.obtenerUsuarios()
@@ -59,10 +70,10 @@ class ListarUsuarioActivity : AppCompatActivity() {
     private fun enviarWsp(usuario: LoginRequest) {
         val mensaje = """
             Hola *${usuario.nombre}*, tu cuenta ha sido creada. Aquí tienes tus credenciales:
-            
+
             👤 Usuario: *${usuario.username}*
             🔑 Contraseña: *123456789*
-            
+
             📲 Descarga la app desde aquí: https://pagina-barbershop.vercel.app/
             Por favor, cambia tu contraseña después de ingresar.
         """.trimIndent()

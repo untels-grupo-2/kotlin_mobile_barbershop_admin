@@ -1,13 +1,15 @@
 package com.example.ta_avance.viewmodel
 
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.auth0.android.jwt.JWT
 import com.example.ta_avance.dto.login.LoginRequest
 import com.example.ta_avance.repository.AuthRepository
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.util.PreferenciasHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,33 +19,40 @@ class MainViewModel @Inject constructor(
     private val preferenciasHelper: PreferenciasHelper
 ) : ViewModel() {
 
-    val loginStatus = MutableLiveData<String>()
-    val nombre = MutableLiveData<String>()
-    val apellido = MutableLiveData<String>()
+    private val _loginState = MutableStateFlow<UiState<Pair<String, String>>>(UiState.Empty)
+    val loginState: StateFlow<UiState<Pair<String, String>>> = _loginState
 
     fun login(usuario: String, contraseña: String) {
+        _loginState.value = UiState.Loading
         viewModelScope.launch {
             val request = LoginRequest(username = usuario, password = contraseña)
             authRepository.login(request)
                 .onSuccess { body ->
-                    val token = body.data?.token ?: return@onSuccess
-                    val refreshToken = body.data.refreshToken ?: return@onSuccess
+                    val token = body.data?.token ?: run {
+                        _loginState.value = UiState.Error("Token inválido")
+                        return@onSuccess
+                    }
+                    val refreshToken = body.data.refreshToken ?: run {
+                        _loginState.value = UiState.Error("Refresh token inválido")
+                        return@onSuccess
+                    }
                     val jwt = JWT(token)
                     val role = jwt.getClaim("rol").asString()
 
                     if (role != "ADMIN") {
-                        loginStatus.postValue("NO_ADMIN")
+                        _loginState.value = UiState.Error("NO_ADMIN")
                         return@onSuccess
                     }
 
                     preferenciasHelper.guardarToken(token)
                     preferenciasHelper.guardarRefreshToken(refreshToken)
-                    nombre.postValue(jwt.getClaim("nombre").asString())
-                    apellido.postValue(jwt.getClaim("apellido").asString())
-                    loginStatus.postValue("SUCCESS")
+
+                    val nombre = jwt.getClaim("nombre").asString() ?: ""
+                    val apellido = jwt.getClaim("apellido").asString() ?: ""
+                    _loginState.value = UiState.Success(Pair(nombre, apellido))
                 }
                 .onFailure { e ->
-                    loginStatus.postValue("FAILURE: ${e.message}")
+                    _loginState.value = UiState.Error(e.message ?: "Error desconocido")
                 }
         }
     }
