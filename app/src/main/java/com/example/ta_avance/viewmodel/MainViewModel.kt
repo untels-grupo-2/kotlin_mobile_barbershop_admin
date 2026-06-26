@@ -23,6 +23,11 @@ class MainViewModel @Inject constructor(
     val loginState: StateFlow<UiState<Pair<String, String>>> = _loginState
 
     fun login(usuario: String, contraseña: String) {
+        if (usuario.isBlank() || contraseña.isBlank()) {
+            _loginState.value = UiState.Error("CAMPOS_VACIOS")
+            return
+        }
+
         _loginState.value = UiState.Loading
         viewModelScope.launch {
             val request = LoginRequest(username = usuario, password = contraseña)

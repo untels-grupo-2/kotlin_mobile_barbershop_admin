@@ -33,7 +33,6 @@ class GestionarBarberoActivity : AppCompatActivity() {
 
     private lateinit var viewModel: GestionarBarberoViewModel
     private lateinit var recyclerView: RecyclerView
-    private lateinit var btnAgregarBarbero: Button
     private var imagenSeleccionadaUri: Uri? = null
 
     companion object {
@@ -46,11 +45,9 @@ class GestionarBarberoActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.recyclerViewBarberos)
         recyclerView.layoutManager = LinearLayoutManager(this)
-
-        btnAgregarBarbero = findViewById(R.id.btnAgregarBarbero)
-        btnAgregarBarbero.setOnClickListener { mostrarPopupNuevoBarbero(it) }
-
         viewModel = ViewModelProvider(this).get(GestionarBarberoViewModel::class.java)
+
+        findViewById<Button>(R.id.btnAgregarBarbero).setOnClickListener { mostrarPopupNuevoBarbero(it) }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -58,12 +55,8 @@ class GestionarBarberoActivity : AppCompatActivity() {
                     when (state) {
                         is UiState.Success -> {
                             recyclerView.adapter = BarberoAdapter(state.data, object : BarberoAdapter.OnBarberoClickListener {
-                                override fun onActualizar(barbero: BarberoDto) {
-                                    mostrarPopupActualizarBarbero(barbero)
-                                }
-                                override fun onEliminar(barbero: BarberoDto) {
-                                    eliminarBarbero(barbero.barbero_id)
-                                }
+                                override fun onActualizar(barbero: BarberoDto) { mostrarPopupActualizarBarbero(barbero) }
+                                override fun onEliminar(barbero: BarberoDto) { viewModel.eliminarBarbero(barbero.barbero_id) }
                             })
                         }
                         is UiState.Error -> Toast.makeText(this@GestionarBarberoActivity, state.message, Toast.LENGTH_SHORT).show()
@@ -79,7 +72,7 @@ class GestionarBarberoActivity : AppCompatActivity() {
                     when (state) {
                         is UiState.Success -> {
                             Toast.makeText(this@GestionarBarberoActivity, state.data, Toast.LENGTH_SHORT).show()
-                            cargarLista()
+                            viewModel.obtenerBarberos()
                         }
                         is UiState.Error -> Toast.makeText(this@GestionarBarberoActivity, state.message, Toast.LENGTH_SHORT).show()
                         else -> {}
@@ -88,83 +81,53 @@ class GestionarBarberoActivity : AppCompatActivity() {
             }
         }
 
-        cargarLista()
-    }
-
-    private fun cargarLista() {
         viewModel.obtenerBarberos()
-    }
-
-    private fun mostrarPopupActualizarBarbero(barbero: BarberoDto) {
-        val popupView = LayoutInflater.from(this).inflate(R.layout.popup_nuevo_barbero, null)
-        val etNombre = popupView.findViewById<EditText>(R.id.etNombreNuevoBarbero)
-        val btnCrear = popupView.findViewById<Button>(R.id.btnCrearBarbero)
-        val btnCancelar = popupView.findViewById<Button>(R.id.btnCancelar)
-        val btnSeleccionarImagen = popupView.findViewById<Button>(R.id.btnSeleccionarImagen)
-
-        btnSeleccionarImagen.setOnClickListener {
-            startActivityForResult(Intent(Intent.ACTION_PICK).apply { type = "image/*" }, REQUEST_SELECT_IMAGE)
-        }
-
-        etNombre.setText(barbero.nombre)
-        btnCrear.text = "Actualizar"
-
-        val rootView = window.decorView.rootView as ViewGroup
-        val dimBehind = View(this).apply { setBackgroundColor(0x88000000.toInt()) }
-        rootView.addView(dimBehind, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-
-        popupView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in))
-
-        val popupWindow = PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
-        popupWindow.showAtLocation(recyclerView, Gravity.CENTER, 0, 0)
-        popupWindow.setOnDismissListener { rootView.removeView(dimBehind) }
-
-        btnCrear.setOnClickListener {
-            val nuevoNombre = etNombre.text.toString().trim()
-            if (nuevoNombre.isNotEmpty()) {
-                viewModel.actualizarBarbero(this, barbero.barbero_id, nuevoNombre, imagenSeleccionadaUri)
-                popupWindow.dismiss()
-            } else {
-                etNombre.error = "Campo obligatorio"
-            }
-        }
-
-        btnCancelar.setOnClickListener { popupWindow.dismiss() }
     }
 
     private fun mostrarPopupNuevoBarbero(anchorView: View) {
         val popupView = LayoutInflater.from(this).inflate(R.layout.popup_nuevo_barbero, null)
         popupView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in))
-
         val rootView = window.decorView.rootView as ViewGroup
-        val dimBehind = View(this).apply { setBackgroundColor(0x88000000.toInt()) }
-        rootView.addView(dimBehind, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-
-        val popupWindow = PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
-        popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, 0)
-        popupWindow.setOnDismissListener { rootView.removeView(dimBehind) }
+        val dim = View(this).apply { setBackgroundColor(0x88000000.toInt()) }
+        rootView.addView(dim, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        val popup = PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+        popup.showAtLocation(anchorView, Gravity.CENTER, 0, 0)
+        popup.setOnDismissListener { rootView.removeView(dim) }
 
         val etNombre = popupView.findViewById<EditText>(R.id.etNombreNuevoBarbero)
-        val btnCrear = popupView.findViewById<Button>(R.id.btnCrearBarbero)
-        val btnCancelar = popupView.findViewById<Button>(R.id.btnCancelar)
-        val btnSeleccionarImagen = popupView.findViewById<Button>(R.id.btnSeleccionarImagen)
-
-        btnSeleccionarImagen.setOnClickListener {
+        popupView.findViewById<Button>(R.id.btnSeleccionarImagen).setOnClickListener {
             startActivityForResult(Intent(Intent.ACTION_PICK).apply { type = "image/*" }, REQUEST_SELECT_IMAGE)
         }
+        popupView.findViewById<Button>(R.id.btnCrearBarbero).setOnClickListener {
+            viewModel.crearBarbero(this, etNombre.text.toString().trim(), imagenSeleccionadaUri)
+            imagenSeleccionadaUri = null
+            popup.dismiss()
+        }
+        popupView.findViewById<Button>(R.id.btnCancelar).setOnClickListener { popup.dismiss() }
+    }
 
-        btnCrear.setOnClickListener {
-            val nombre = etNombre.text.toString().trim()
-            if (nombre.isNotEmpty()) {
-                viewModel.crearBarbero(this, nombre, imagenSeleccionadaUri)
-                imagenSeleccionadaUri = null
-                popupWindow.dismiss()
-            } else {
-                etNombre.error = "Campo obligatorio"
+    private fun mostrarPopupActualizarBarbero(barbero: BarberoDto) {
+        val popupView = LayoutInflater.from(this).inflate(R.layout.popup_nuevo_barbero, null)
+        popupView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in))
+        val rootView = window.decorView.rootView as ViewGroup
+        val dim = View(this).apply { setBackgroundColor(0x88000000.toInt()) }
+        rootView.addView(dim, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        val popup = PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+        popup.showAtLocation(recyclerView, Gravity.CENTER, 0, 0)
+        popup.setOnDismissListener { rootView.removeView(dim) }
+
+        val etNombre = popupView.findViewById<EditText>(R.id.etNombreNuevoBarbero).also { it.setText(barbero.nombre) }
+        popupView.findViewById<Button>(R.id.btnSeleccionarImagen).setOnClickListener {
+            startActivityForResult(Intent(Intent.ACTION_PICK).apply { type = "image/*" }, REQUEST_SELECT_IMAGE)
+        }
+        popupView.findViewById<Button>(R.id.btnCrearBarbero).apply {
+            text = "Actualizar"
+            setOnClickListener {
+                viewModel.actualizarBarbero(this@GestionarBarberoActivity, barbero.barbero_id, etNombre.text.toString().trim(), imagenSeleccionadaUri)
+                popup.dismiss()
             }
         }
-
-        btnCancelar.setOnClickListener { popupWindow.dismiss() }
+        popupView.findViewById<Button>(R.id.btnCancelar).setOnClickListener { popup.dismiss() }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -176,9 +139,5 @@ class GestionarBarberoActivity : AppCompatActivity() {
                 visibility = View.VISIBLE
             }
         }
-    }
-
-    private fun eliminarBarbero(id: Int) {
-        viewModel.eliminarBarbero(id)
     }
 }

@@ -19,7 +19,6 @@ import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.ListarUsuarioViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import java.net.URLEncoder
 
 @AndroidEntryPoint
 class ListarUsuarioActivity : AppCompatActivity() {
@@ -33,7 +32,6 @@ class ListarUsuarioActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.recyclerViewUsuarios)
         recyclerView.layoutManager = LinearLayoutManager(this)
-
         viewModel = ViewModelProvider(this).get(ListarUsuarioViewModel::class.java)
 
         findViewById<Button>(R.id.btnAgregarUsuario).setOnClickListener {
@@ -47,13 +45,12 @@ class ListarUsuarioActivity : AppCompatActivity() {
                         is UiState.Success -> {
                             recyclerView.adapter = UsuarioAdapter(state.data, object : UsuarioAdapter.OnUsuarioClickListener {
                                 override fun onMessageWsp(usuario: LoginRequest) {
-                                    enviarWsp(usuario)
+                                    abrirWhatsApp(viewModel.generarUriWhatsAppBienvenida(usuario))
                                 }
                                 override fun onVerReservas(usuario: LoginRequest) {
-                                    val intent = Intent(this@ListarUsuarioActivity, ReservasIdActivity::class.java).apply {
+                                    startActivity(Intent(this@ListarUsuarioActivity, ReservasIdActivity::class.java).apply {
                                         putExtra("usuarioId", usuario.usuario_id)
-                                    }
-                                    startActivity(intent)
+                                    })
                                 }
                             })
                         }
@@ -67,19 +64,8 @@ class ListarUsuarioActivity : AppCompatActivity() {
         viewModel.obtenerUsuarios()
     }
 
-    private fun enviarWsp(usuario: LoginRequest) {
-        val mensaje = """
-            Hola *${usuario.nombre}*, tu cuenta ha sido creada. Aquí tienes tus credenciales:
-
-            👤 Usuario: *${usuario.username}*
-            🔑 Contraseña: *123456789*
-
-            📲 Descarga la app desde aquí: https://pagina-barbershop.vercel.app/
-            Por favor, cambia tu contraseña después de ingresar.
-        """.trimIndent()
-
+    private fun abrirWhatsApp(uri: String) {
         try {
-            val uri = "https://wa.me/51${usuario.celular}?text=${URLEncoder.encode(mensaje, "UTF-8")}"
             startActivity(Intent(Intent.ACTION_VIEW).apply { data = Uri.parse(uri) })
         } catch (e: Exception) {
             Toast.makeText(this, "No se pudo abrir WhatsApp", Toast.LENGTH_SHORT).show()

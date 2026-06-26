@@ -20,6 +20,10 @@ class RecuperarContraViewModel @Inject constructor(
     val recuperarState: StateFlow<UiState<String>> = _recuperarState
 
     fun recuperar(usuario: String, correo: String) {
+        if (usuario.isBlank() || correo.isBlank()) {
+            _recuperarState.value = UiState.Error("Completa todos los campos")
+            return
+        }
         _recuperarState.value = UiState.Loading
         viewModelScope.launch {
             authRepository.recuperarContraseña(RecuperacionRequest(usuario, correo))

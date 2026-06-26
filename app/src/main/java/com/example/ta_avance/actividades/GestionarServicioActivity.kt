@@ -25,7 +25,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.ta_avance.R
 import com.example.ta_avance.adapters.ServicioAdapter
 import com.example.ta_avance.dto.servicio.ServicioDto
-import com.example.ta_avance.dto.servicio.ServicioRequest
 import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.GestionarServicioViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -38,13 +37,6 @@ class GestionarServicioActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private var imagenSeleccionadaUri: Uri? = null
 
-    private val tipoServicioMap = linkedMapOf(
-        "CORTES" to 1,
-        "SKINCARE" to 2,
-        "AFEITADO DE BARBA" to 3,
-        "COLORACIÓN" to 4
-    )
-
     companion object {
         private const val REQUEST_SELECT_IMAGE = 1001
     }
@@ -55,12 +47,9 @@ class GestionarServicioActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.recyclerViewServicios)
         recyclerView.layoutManager = LinearLayoutManager(this)
-
         viewModel = ViewModelProvider(this).get(GestionarServicioViewModel::class.java)
 
-        findViewById<Button>(R.id.btnAgregarServicio).setOnClickListener {
-            mostrarPopupNuevoServicio(it)
-        }
+        findViewById<Button>(R.id.btnAgregarServicio).setOnClickListener { mostrarPopupNuevoServicio(it) }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -68,12 +57,8 @@ class GestionarServicioActivity : AppCompatActivity() {
                     when (state) {
                         is UiState.Success -> {
                             recyclerView.adapter = ServicioAdapter(state.data, object : ServicioAdapter.OnServicioClickListener {
-                                override fun onActualizar(servicio: ServicioDto) {
-                                    mostrarPopupActualizarServicio(servicio)
-                                }
-                                override fun onEliminar(servicio: ServicioDto) {
-                                    eliminarServicio(servicio.servicio_id)
-                                }
+                                override fun onActualizar(servicio: ServicioDto) { mostrarPopupActualizarServicio(servicio) }
+                                override fun onEliminar(servicio: ServicioDto) { viewModel.eliminarServicio(servicio.servicio_id) }
                             })
                         }
                         is UiState.Error -> Toast.makeText(this@GestionarServicioActivity, state.message, Toast.LENGTH_SHORT).show()
@@ -89,7 +74,7 @@ class GestionarServicioActivity : AppCompatActivity() {
                     when (state) {
                         is UiState.Success -> {
                             Toast.makeText(this@GestionarServicioActivity, state.data, Toast.LENGTH_SHORT).show()
-                            cargarLista()
+                            viewModel.obtenerServicios()
                         }
                         is UiState.Error -> Toast.makeText(this@GestionarServicioActivity, state.message, Toast.LENGTH_SHORT).show()
                         else -> {}
@@ -98,111 +83,87 @@ class GestionarServicioActivity : AppCompatActivity() {
             }
         }
 
-        cargarLista()
-    }
-
-    private fun cargarLista() {
         viewModel.obtenerServicios()
     }
 
     private fun crearSpinnerAdapter() = ArrayAdapter(
-        this,
-        android.R.layout.simple_spinner_item,
-        tipoServicioMap.keys.toTypedArray()
+        this, android.R.layout.simple_spinner_item, viewModel.tiposServicio
     ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
 
-    private fun crearDimBehind(): View {
-        val rootView = window.decorView.rootView as ViewGroup
-        val dimBehind = View(this).apply { setBackgroundColor(0x88000000.toInt()) }
-        rootView.addView(dimBehind, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-        return dimBehind
+    private fun crearDim(): View {
+        val dim = View(this).apply { setBackgroundColor(0x88000000.toInt()) }
+        (window.decorView.rootView as ViewGroup).addView(dim, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        return dim
     }
 
     private fun mostrarPopupNuevoServicio(anchorView: View) {
         val popupView = LayoutInflater.from(this).inflate(R.layout.popup_nuevo_servicio, null)
         popupView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in))
-
         val rootView = window.decorView.rootView as ViewGroup
-        val dimBehind = crearDimBehind()
-
-        val popupWindow = PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
-        popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, 0)
-        popupWindow.setOnDismissListener { rootView.removeView(dimBehind) }
+        val dim = crearDim()
+        val popup = PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+        popup.showAtLocation(anchorView, Gravity.CENTER, 0, 0)
+        popup.setOnDismissListener { rootView.removeView(dim) }
 
         val etNombre = popupView.findViewById<EditText>(R.id.etNombreServicio)
         val etPrecio = popupView.findViewById<EditText>(R.id.etPrecioServicio)
         val etDescripcion = popupView.findViewById<EditText>(R.id.etDescripcionServicio)
-        val spinnerTipo = popupView.findViewById<Spinner>(R.id.spinnerTipoServicio)
-        spinnerTipo.adapter = crearSpinnerAdapter()
+        val spinner = popupView.findViewById<Spinner>(R.id.spinnerTipoServicio).also { it.adapter = crearSpinnerAdapter() }
 
         popupView.findViewById<Button>(R.id.btnSeleccionarImagenServicio).setOnClickListener {
             startActivityForResult(Intent(Intent.ACTION_PICK).apply { type = "image/*" }, REQUEST_SELECT_IMAGE)
         }
-
         popupView.findViewById<Button>(R.id.btnCrearServicio).setOnClickListener {
-            val nombre = etNombre.text.toString().trim()
-            val precioStr = etPrecio.text.toString().trim()
-            val descripcion = etDescripcion.text.toString().trim()
-            val tipoSeleccionado = spinnerTipo.selectedItem as String
-            if (nombre.isNotEmpty() && precioStr.isNotEmpty() && descripcion.isNotEmpty()) {
-                val request = ServicioRequest(nombre, precioStr.toDouble(), descripcion, tipoServicioMap[tipoSeleccionado]!!)
-                viewModel.crearServicio(this, request, imagenSeleccionadaUri)
-                imagenSeleccionadaUri = null
-                popupWindow.dismiss()
-            } else {
-                Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
-            }
+            viewModel.crearServicio(
+                this,
+                etNombre.text.toString().trim(),
+                etPrecio.text.toString().trim(),
+                etDescripcion.text.toString().trim(),
+                spinner.selectedItem as String,
+                imagenSeleccionadaUri
+            )
+            imagenSeleccionadaUri = null
+            popup.dismiss()
         }
-
-        popupView.findViewById<Button>(R.id.btnCancelarServicio).setOnClickListener { popupWindow.dismiss() }
+        popupView.findViewById<Button>(R.id.btnCancelarServicio).setOnClickListener { popup.dismiss() }
     }
 
     private fun mostrarPopupActualizarServicio(servicio: ServicioDto) {
         val popupView = LayoutInflater.from(this).inflate(R.layout.popup_nuevo_servicio, null)
         popupView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in))
-
         val rootView = window.decorView.rootView as ViewGroup
-        val dimBehind = crearDimBehind()
+        val dim = crearDim()
+        val popup = PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+        popup.showAtLocation(recyclerView, Gravity.CENTER, 0, 0)
+        popup.setOnDismissListener { rootView.removeView(dim) }
 
-        val popupWindow = PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
-        popupWindow.showAtLocation(recyclerView, Gravity.CENTER, 0, 0)
-        popupWindow.setOnDismissListener { rootView.removeView(dimBehind) }
-
-        val etNombre = popupView.findViewById<EditText>(R.id.etNombreServicio)
-        val etPrecio = popupView.findViewById<EditText>(R.id.etPrecioServicio)
-        val etDescripcion = popupView.findViewById<EditText>(R.id.etDescripcionServicio)
-        val spinnerTipo = popupView.findViewById<Spinner>(R.id.spinnerTipoServicio)
-        spinnerTipo.adapter = crearSpinnerAdapter()
-
-        etNombre.setText(servicio.nombre)
-        etPrecio.setText(servicio.precio.toString())
-        etDescripcion.setText(servicio.descripcion)
-
-        tipoServicioMap.values.toList().indexOfFirst { it == servicio.tipoServicio_id }
-            .takeIf { it >= 0 }?.let { spinnerTipo.setSelection(it) }
+        val etNombre = popupView.findViewById<EditText>(R.id.etNombreServicio).also { it.setText(servicio.nombre) }
+        val etPrecio = popupView.findViewById<EditText>(R.id.etPrecioServicio).also { it.setText(servicio.precio.toString()) }
+        val etDescripcion = popupView.findViewById<EditText>(R.id.etDescripcionServicio).also { it.setText(servicio.descripcion) }
+        val spinner = popupView.findViewById<Spinner>(R.id.spinnerTipoServicio).also {
+            it.adapter = crearSpinnerAdapter()
+            it.setSelection(viewModel.obtenerIndicesTipoServicio(servicio.tipoServicio_id))
+        }
 
         popupView.findViewById<Button>(R.id.btnSeleccionarImagenServicio).setOnClickListener {
             startActivityForResult(Intent(Intent.ACTION_PICK).apply { type = "image/*" }, REQUEST_SELECT_IMAGE)
         }
-
         popupView.findViewById<Button>(R.id.btnCrearServicio).apply {
             text = "Actualizar"
             setOnClickListener {
-                val nombre = etNombre.text.toString().trim()
-                val precioStr = etPrecio.text.toString().trim()
-                val descripcion = etDescripcion.text.toString().trim()
-                val tipoSeleccionado = spinnerTipo.selectedItem as String
-                if (nombre.isNotEmpty() && precioStr.isNotEmpty() && descripcion.isNotEmpty()) {
-                    val request = ServicioRequest(nombre, precioStr.toDouble(), descripcion, tipoServicioMap[tipoSeleccionado]!!)
-                    viewModel.actualizarServicio(this@GestionarServicioActivity, servicio.servicio_id, request, imagenSeleccionadaUri)
-                    popupWindow.dismiss()
-                } else {
-                    Toast.makeText(this@GestionarServicioActivity, "Completa todos los campos", Toast.LENGTH_SHORT).show()
-                }
+                viewModel.actualizarServicio(
+                    this@GestionarServicioActivity,
+                    servicio.servicio_id,
+                    etNombre.text.toString().trim(),
+                    etPrecio.text.toString().trim(),
+                    etDescripcion.text.toString().trim(),
+                    spinner.selectedItem as String,
+                    imagenSeleccionadaUri
+                )
+                popup.dismiss()
             }
         }
-
-        popupView.findViewById<Button>(R.id.btnCancelarServicio).setOnClickListener { popupWindow.dismiss() }
+        popupView.findViewById<Button>(R.id.btnCancelarServicio).setOnClickListener { popup.dismiss() }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -214,9 +175,5 @@ class GestionarServicioActivity : AppCompatActivity() {
                 visibility = View.VISIBLE
             }
         }
-    }
-
-    private fun eliminarServicio(id: Int) {
-        viewModel.eliminarServicio(id)
     }
 }

@@ -26,7 +26,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.ta_avance.R
 import com.example.ta_avance.adapters.ReservaAdapter
-import com.example.ta_avance.dto.login.LoginRequest
 import com.example.ta_avance.dto.reserva.DtoReserva
 import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.ReservasViewModel
@@ -39,12 +38,10 @@ import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import java.net.URLEncoder
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.Locale
 
 @AndroidEntryPoint
 class ReservasActivity : AppCompatActivity() {
@@ -59,21 +56,13 @@ class ReservasActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reservas)
 
-        val nuevoLocale = Locale("es", "ES")
-        Locale.setDefault(nuevoLocale)
-        val config = resources.configuration
-        config.setLocale(nuevoLocale)
-        resources.updateConfiguration(config, resources.displayMetrics)
-
         recyclerView = findViewById(R.id.recyclerViewReservas)
         recyclerView.layoutManager = LinearLayoutManager(this)
-
         spinnerEstado = findViewById(R.id.spinnerEstado)
         etFechaSeleccionada = findViewById(R.id.etFechaSeleccionada)
         tituloReservas = findViewById(R.id.tituloReservas)
 
-        val estados = arrayOf("CREADA", "CONFIRMADA", "REALIZADA")
-        spinnerEstado.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, estados).also {
+        spinnerEstado.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, arrayOf("CREADA", "CONFIRMADA", "REALIZADA")).also {
             it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
 
@@ -86,15 +75,19 @@ class ReservasActivity : AppCompatActivity() {
                         is UiState.Success -> {
                             val estado = spinnerEstado.selectedItem.toString()
                             recyclerView.adapter = ReservaAdapter(state.data, object : ReservaAdapter.OnReservaClickListener {
-                                override fun onVerDetallesClick(reserva: DtoReserva) {
-                                    mostrarPopupDetalle(reserva)
-                                }
+                                override fun onVerDetallesClick(reserva: DtoReserva) { mostrarPopupDetalle(reserva) }
                                 override fun onReservaRealizadaClick(reserva: DtoReserva) {
                                     viewModel.cambiarEstadoReserva(reserva.reservaId, "REALIZADA", "Reserva completada correctamente")
                                 }
                             }, estado)
                         }
-                        is UiState.Error -> Toast.makeText(this@ReservasActivity, state.message, Toast.LENGTH_SHORT).show()
+                        is UiState.Error -> {
+                            if (state.message == "FECHA_REQUERIDA") {
+                                Toast.makeText(this@ReservasActivity, "Selecciona una fecha", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(this@ReservasActivity, state.message, Toast.LENGTH_SHORT).show()
+                            }
+                        }
                         else -> {}
                     }
                 }
@@ -159,25 +152,17 @@ class ReservasActivity : AppCompatActivity() {
 
         builder.build().apply {
             addOnPositiveButtonClickListener { selection ->
-                val fechaSeleccionada = Instant.ofEpochMilli(selection)
-                    .atZone(ZoneId.systemDefault()).toLocalDate()
-                etFechaSeleccionada.setText(fechaSeleccionada.toString())
+                val fecha = Instant.ofEpochMilli(selection).atZone(ZoneId.systemDefault()).toLocalDate()
+                etFechaSeleccionada.setText(fecha.toString())
             }
             show(supportFragmentManager, "DATE_PICKER")
         }
     }
 
     private fun cargarReservas() {
-        val fecha = etFechaSeleccionada.text.toString()
         val estado = spinnerEstado.selectedItem.toString()
-
-        if ((estado == "CREADA" || estado == "CONFIRMADA") && fecha.isEmpty()) {
-            Toast.makeText(this, "Selecciona una fecha", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        tituloReservas.text = "Reservas - $estado"
-        viewModel.cargarReservas(fecha, estado)
+        tituloReservas.text = viewModel.generarTituloReservas(estado)
+        viewModel.cargarReservas(etFechaSeleccionada.text.toString(), estado)
     }
 
     private fun mostrarPopupDetalle(reserva: DtoReserva) {
@@ -207,7 +192,7 @@ class ReservasActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 viewModel.usuarioState.collect { state ->
                     if (state is UiState.Success) {
-                        enviarWsp(state.data, reserva)
+                        abrirWhatsApp(viewModel.generarUriWhatsAppConfirmacion(state.data, reserva))
                         viewModel.cambiarEstadoReserva(reserva.reservaId, "CONFIRMADA", "Reserva confirmada por el administrador.")
                     }
                 }
@@ -225,29 +210,16 @@ class ReservasActivity : AppCompatActivity() {
     private fun mostrarPopupMotivo(reservaId: Long, nuevoEstado: String) {
         val motivoView = LayoutInflater.from(this).inflate(R.layout.popup_motivo_cancelacion, null)
         val motivoDialog = AlertDialog.Builder(this).setView(motivoView).create()
-
-        val etMotivoCancelacion = motivoView.findViewById<EditText>(R.id.etMotivoCancelacion)
         motivoView.findViewById<MaterialButton>(R.id.btnEnviarMotivo).setOnClickListener {
-            viewModel.cambiarEstadoReserva(reservaId, nuevoEstado, etMotivoCancelacion.text.toString().trim())
+            val motivo = motivoView.findViewById<EditText>(R.id.etMotivoCancelacion).text.toString().trim()
+            viewModel.cambiarEstadoReserva(reservaId, nuevoEstado, motivo)
             motivoDialog.dismiss()
         }
-
         motivoDialog.show()
     }
 
-    private fun enviarWsp(usuario: LoginRequest, reserva: DtoReserva) {
-        val mensaje = """
-            Hola *${usuario.nombre}*, tu reserva ha sido confirmada 🎉
-
-            📅 Fecha: *${reserva.fechaReserva}*
-            🕒 Horario: *${reserva.horarioRango}*
-            💇 Servicio: *${reserva.servicioNombre}*
-
-            Por favor, acude puntual a tu cita. ¡Gracias por elegirnos! 💈
-        """.trimIndent()
-
+    private fun abrirWhatsApp(uri: String) {
         try {
-            val uri = "https://wa.me/51${usuario.celular}?text=${URLEncoder.encode(mensaje, "UTF-8")}"
             startActivity(Intent(Intent.ACTION_VIEW).apply { data = Uri.parse(uri) })
         } catch (e: Exception) {
             Toast.makeText(this, "No se pudo abrir WhatsApp", Toast.LENGTH_SHORT).show()

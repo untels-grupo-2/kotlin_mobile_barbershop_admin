@@ -2,6 +2,8 @@ package com.example.ta_avance.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ta_avance.domain.usecase.ConstruirMensajeConfirmacionReservaUseCase
+import com.example.ta_avance.domain.usecase.GenerarUriWhatsAppUseCase
 import com.example.ta_avance.dto.login.LoginRequest
 import com.example.ta_avance.dto.reserva.DtoReserva
 import com.example.ta_avance.repository.ReservaRepository
@@ -16,7 +18,9 @@ import javax.inject.Inject
 @HiltViewModel
 class ReservasViewModel @Inject constructor(
     private val reservaRepository: ReservaRepository,
-    private val usuarioRepository: UsuarioRepository
+    private val usuarioRepository: UsuarioRepository,
+    private val construirMensajeConfirmacion: ConstruirMensajeConfirmacionReservaUseCase,
+    private val generarUriWhatsApp: GenerarUriWhatsAppUseCase
 ) : ViewModel() {
 
     private val _reservasState = MutableStateFlow<UiState<List<DtoReserva>>>(UiState.Empty)
@@ -28,13 +32,18 @@ class ReservasViewModel @Inject constructor(
     private val _usuarioState = MutableStateFlow<UiState<LoginRequest>>(UiState.Empty)
     val usuarioState: StateFlow<UiState<LoginRequest>> = _usuarioState
 
-    fun cargarReservas(fecha: String, estado: String) {
+    fun cargarReservas(fecha: String, estado: String): Boolean {
+        if ((estado == "CREADA" || estado == "CONFIRMADA") && fecha.isBlank()) {
+            _reservasState.value = UiState.Error("FECHA_REQUERIDA")
+            return false
+        }
         _reservasState.value = UiState.Loading
         viewModelScope.launch {
             reservaRepository.listarReservas(fecha, estado)
                 .onSuccess { _reservasState.value = UiState.Success(it) }
                 .onFailure { _reservasState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
+        return true
     }
 
     fun cargarReservasConId(fecha: String, estado: String, usuarioId: Long) {
@@ -62,5 +71,25 @@ class ReservasViewModel @Inject constructor(
                 .onSuccess { _usuarioState.value = UiState.Success(it) }
                 .onFailure { _usuarioState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
+    }
+
+    fun generarTituloReservas(estado: String): String = "Reservas - $estado"
+
+    fun calcularResumenReservas(reservas: List<DtoReserva>): Pair<String, String> {
+        return if (reservas.isNotEmpty()) {
+            "Reservas de ${reservas[0].usuarioNombre}" to "Monto Total: S/ ${reservas[0].montoTotal}"
+        } else {
+            "Reservas del cliente" to "Monto Total: S/ 0"
+        }
+    }
+
+    fun generarUriWhatsAppConfirmacion(usuario: LoginRequest, reserva: DtoReserva): String {
+        val mensaje = construirMensajeConfirmacion(
+            usuario.nombre,
+            reserva.fechaReserva,
+            reserva.horarioRango,
+            reserva.servicioNombre
+        )
+        return generarUriWhatsApp(usuario.celular, mensaje)
     }
 }
