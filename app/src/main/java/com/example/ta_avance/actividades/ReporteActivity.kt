@@ -11,13 +11,18 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.ta_avance.R
 import com.example.ta_avance.dto.servicio.ServicioDto
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.GestionarServicioViewModel
 import com.example.ta_avance.viewmodel.ReporteViewModel
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -56,26 +61,39 @@ class ReporteActivity : AppCompatActivity() {
         servicioViewModel = ViewModelProvider(this).get(GestionarServicioViewModel::class.java)
         reporteViewModel = ViewModelProvider(this).get(ReporteViewModel::class.java)
 
-        servicioViewModel.servicios.observe(this) { servicios ->
-            listaServicios.clear()
-            listaServicios.addAll(servicios)
-            val nombres = mutableListOf("Todos") + servicios.map { it.nombre }
-            spinnerServicio.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, nombres)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                servicioViewModel.listState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            listaServicios.clear()
+                            listaServicios.addAll(state.data)
+                            val nombres = mutableListOf("Todos") + state.data.map { it.nombre }
+                            spinnerServicio.adapter = ArrayAdapter(this@ReporteActivity, android.R.layout.simple_spinner_dropdown_item, nombres)
+                        }
+                        is UiState.Error -> Toast.makeText(this@ReporteActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
+                }
+            }
         }
 
-        reporteViewModel.reporte.observe(this) { reporte ->
-            tvServicioNombre.text = reporte.servicioNombre ?: "Todos"
-            tvMontoTotal.text = "S/ ${reporte.montoTotal}"
-            tvCantidadReservas.text = "${reporte.cantidadReservas}"
-            cardResultado.visibility = View.VISIBLE
-        }
-
-        reporteViewModel.error.observe(this) { msg ->
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-        }
-
-        servicioViewModel.error.observe(this) { msg ->
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                reporteViewModel.reporteState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            val reporte = state.data
+                            tvServicioNombre.text = reporte.servicioNombre ?: "Todos"
+                            tvMontoTotal.text = "S/ ${reporte.montoTotal}"
+                            tvCantidadReservas.text = "${reporte.cantidadReservas}"
+                            cardResultado.visibility = View.VISIBLE
+                        }
+                        is UiState.Error -> Toast.makeText(this@ReporteActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
+                }
+            }
         }
 
         etFechaInicio.setOnClickListener { mostrarDatePicker(true) }

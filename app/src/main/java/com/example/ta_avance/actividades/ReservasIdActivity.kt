@@ -5,14 +5,19 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ta_avance.R
 import com.example.ta_avance.adapters.ReservaAdapter
 import com.example.ta_avance.dto.reserva.DtoReserva
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.ReservasViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class ReservasIdActivity : AppCompatActivity() {
@@ -41,27 +46,33 @@ class ReservasIdActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         viewModel = ViewModelProvider(this).get(ReservasViewModel::class.java)
-        cargarReservas()
-    }
 
-    private fun cargarReservas() {
-        val estado = "REALIZADA"
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.reservasState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            val reservas = state.data
+                            recyclerView.adapter = ReservaAdapter(reservas, object : ReservaAdapter.OnReservaClickListener {
+                                override fun onVerDetallesClick(reserva: DtoReserva) {}
+                                override fun onReservaRealizadaClick(reserva: DtoReserva) {}
+                            }, "REALIZADA")
 
-        viewModel.reservas.observe(this) { reservas ->
-            recyclerView.adapter = ReservaAdapter(reservas, object : ReservaAdapter.OnReservaClickListener {
-                override fun onVerDetallesClick(reserva: DtoReserva) {}
-                override fun onReservaRealizadaClick(reserva: DtoReserva) {}
-            }, estado)
-
-            if (reservas.isNotEmpty()) {
-                tvMontoTotal.text = "Monto Total: S/ ${reservas[0].montoTotal}"
-                tituloReservas.text = "Reservas de ${reservas[0].usuarioNombre}"
-            } else {
-                tvMontoTotal.text = "Monto Total: S/ 0"
-                tituloReservas.text = "Reservas del cliente"
+                            if (reservas.isNotEmpty()) {
+                                tvMontoTotal.text = "Monto Total: S/ ${reservas[0].montoTotal}"
+                                tituloReservas.text = "Reservas de ${reservas[0].usuarioNombre}"
+                            } else {
+                                tvMontoTotal.text = "Monto Total: S/ 0"
+                                tituloReservas.text = "Reservas del cliente"
+                            }
+                        }
+                        is UiState.Error -> Toast.makeText(this@ReservasIdActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
+                }
             }
         }
 
-        viewModel.cargarReservasConId("", estado, usuarioId)
+        viewModel.cargarReservasConId("", "REALIZADA", usuarioId)
     }
 }

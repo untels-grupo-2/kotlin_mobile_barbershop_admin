@@ -6,14 +6,19 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ta_avance.R
 import com.example.ta_avance.adapters.ValoracionAdapter
 import com.example.ta_avance.dto.valoracion.ValoracionDto
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.ListarValoracionViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import java.net.URLEncoder
 
 @AndroidEntryPoint
@@ -32,20 +37,36 @@ class ListarValoracionActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this).get(ListarValoracionViewModel::class.java)
 
-        viewModel.valoraciones.observe(this) { valoraciones ->
-            recyclerView.adapter = ValoracionAdapter(valoraciones) { valoracion ->
-                enviarWsp(valoracion)
-                responderValoracion(valoracion)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.valoracionesState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            recyclerView.adapter = ValoracionAdapter(state.data) { valoracion ->
+                                enviarWsp(valoracion)
+                                responderValoracion(valoracion)
+                            }
+                        }
+                        is UiState.Error -> Toast.makeText(this@ListarValoracionActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
+                }
             }
         }
 
-        viewModel.operacionExitosa.observe(this) { msg ->
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-            viewModel.obtenerValoraciones()
-        }
-
-        viewModel.error.observe(this) { msg ->
-            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.operacionState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            Toast.makeText(this@ListarValoracionActivity, state.data, Toast.LENGTH_SHORT).show()
+                            viewModel.obtenerValoraciones()
+                        }
+                        is UiState.Error -> Toast.makeText(this@ListarValoracionActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
+                }
+            }
         }
 
         viewModel.obtenerValoraciones()
@@ -66,6 +87,5 @@ class ListarValoracionActivity : AppCompatActivity() {
 
     private fun responderValoracion(valoracion: ValoracionDto) {
         viewModel.responderValoracion(valoracion.valoracion_id)
-        viewModel.obtenerValoraciones()
     }
 }

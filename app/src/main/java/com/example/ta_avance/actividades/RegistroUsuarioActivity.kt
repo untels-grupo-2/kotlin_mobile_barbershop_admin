@@ -6,10 +6,15 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.ta_avance.R
+import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.RegistroUsuarioViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class RegistroUsuarioActivity : AppCompatActivity() {
@@ -55,20 +60,22 @@ class RegistroUsuarioActivity : AppCompatActivity() {
             finish()
         }
 
-        viewModel.registroExitoso.observe(this) { success ->
-            if (success == true) {
-                Toast.makeText(this, "Usuario registrado exitosamente", Toast.LENGTH_SHORT).show()
-                val intent = Intent(this, ListarUsuarioActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.registroState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            Toast.makeText(this@RegistroUsuarioActivity, "Usuario registrado exitosamente", Toast.LENGTH_SHORT).show()
+                            val intent = Intent(this@RegistroUsuarioActivity, ListarUsuarioActivity::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            startActivity(intent)
+                            finish()
+                        }
+                        is UiState.Error -> Toast.makeText(this@RegistroUsuarioActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
                 }
-                startActivity(intent)
-                finish()
-            }
-        }
-
-        viewModel.mensajeError.observe(this) { error ->
-            if (error != null) {
-                Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
             }
         }
     }

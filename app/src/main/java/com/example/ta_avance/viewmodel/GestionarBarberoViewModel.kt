@@ -2,14 +2,16 @@ package com.example.ta_avance.viewmodel
 
 import android.content.Context
 import android.net.Uri
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ta_avance.dto.barbero.BarberoDto
 import com.example.ta_avance.dto.barbero.BarberoRequest
 import com.example.ta_avance.repository.BarberoRepository
+import com.example.ta_avance.ui.state.UiState
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import okhttp3.MediaType
 import okhttp3.MultipartBody
@@ -21,45 +23,49 @@ class GestionarBarberoViewModel @Inject constructor(
     private val barberoRepository: BarberoRepository
 ) : ViewModel() {
 
-    val barberos = MutableLiveData<List<BarberoDto>>()
-    val error = MutableLiveData<String>()
-    val operacionExitosa = MutableLiveData<String>()
+    private val _listState = MutableStateFlow<UiState<List<BarberoDto>>>(UiState.Empty)
+    val listState: StateFlow<UiState<List<BarberoDto>>> = _listState
+
+    private val _operacionState = MutableStateFlow<UiState<String>>(UiState.Empty)
+    val operacionState: StateFlow<UiState<String>> = _operacionState
 
     fun obtenerBarberos() {
+        _listState.value = UiState.Loading
         viewModelScope.launch {
             barberoRepository.listarBarberos()
-                .onSuccess { barberos.postValue(it) }
-                .onFailure { error.postValue(it.message) }
+                .onSuccess { _listState.value = UiState.Success(it) }
+                .onFailure { _listState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
     }
 
     fun crearBarbero(context: Context, nombre: String, imagenUri: Uri?) {
         val dtoBody = buildJsonBody(BarberoRequest(nombre))
-        val imagenPart = buildImagePart(context, imagenUri)
-
+        val imagenPart = buildImagePart(context, imagenUri) ?: return
+        _operacionState.value = UiState.Loading
         viewModelScope.launch {
             barberoRepository.crearBarbero(dtoBody, imagenPart)
-                .onSuccess { operacionExitosa.postValue("Barbero creado exitosamente") }
-                .onFailure { error.postValue(it.message) }
+                .onSuccess { _operacionState.value = UiState.Success("Barbero creado exitosamente") }
+                .onFailure { _operacionState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
     }
 
     fun actualizarBarbero(context: Context, id: Int, nuevoNombre: String, imagenUri: Uri?) {
         val dtoBody = buildJsonBody(BarberoRequest(nuevoNombre))
         val imagenPart = buildImagePart(context, imagenUri)
-
+        _operacionState.value = UiState.Loading
         viewModelScope.launch {
             barberoRepository.actualizarBarbero(id, dtoBody, imagenPart)
-                .onSuccess { operacionExitosa.postValue("Barbero actualizado exitosamente") }
-                .onFailure { error.postValue(it.message) }
+                .onSuccess { _operacionState.value = UiState.Success("Barbero actualizado exitosamente") }
+                .onFailure { _operacionState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
     }
 
     fun eliminarBarbero(id: Int) {
+        _operacionState.value = UiState.Loading
         viewModelScope.launch {
             barberoRepository.eliminarBarbero(id)
-                .onSuccess { operacionExitosa.postValue("Barbero eliminado exitosamente") }
-                .onFailure { error.postValue(it.message) }
+                .onSuccess { _operacionState.value = UiState.Success("Barbero eliminado exitosamente") }
+                .onFailure { _operacionState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
     }
 
@@ -78,7 +84,7 @@ class GestionarBarberoViewModel @Inject constructor(
             val imagenBody = RequestBody.create(MediaType.parse(resolver.getType(imagenUri)), imageBytes)
             MultipartBody.Part.createFormData("imagen", "imagen.jpg", imagenBody)
         } catch (e: Exception) {
-            error.postValue("Error al procesar la imagen.")
+            _operacionState.value = UiState.Error("Error al procesar la imagen.")
             null
         }
     }
