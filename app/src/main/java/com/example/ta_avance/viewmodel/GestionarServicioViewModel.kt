@@ -4,10 +4,10 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ta_avance.dto.servicio.ServicioDto
-import com.example.ta_avance.dto.servicio.ServicioRequest
+import com.shared.models.dto.servicio.ServicioDto
+import com.shared.models.dto.servicio.ServicioRequest
 import com.example.ta_avance.repository.ServicioRepository
-import com.example.ta_avance.ui.state.UiState
+import com.shared.models.ui.state.UiState
 import com.example.ta_avance.util.AppConstants
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel

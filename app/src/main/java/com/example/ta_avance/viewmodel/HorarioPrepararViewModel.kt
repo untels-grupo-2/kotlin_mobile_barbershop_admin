@@ -5,10 +5,10 @@ import android.content.Intent
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ta_avance.dto.barbero.BarberoDto
+import com.shared.models.dto.barbero.BarberoDto
 import com.example.ta_avance.repository.BarberoRepository
 import com.example.ta_avance.repository.HorarioRepository
-import com.example.ta_avance.ui.state.UiState
+import com.shared.models.ui.state.UiState
 import com.example.ta_avance.util.DiaSemana
 import com.example.ta_avance.util.TurnoTipo
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -50,7 +50,7 @@ class HorarioPrepararViewModel @Inject constructor(
         _operacionState.value = UiState.Loading
         viewModelScope.launch {
             horarioRepository.actualizarTurnosDia(
-                com.example.ta_avance.dto.horario.TurnosDiaRequest(dia, turnosPorTipo)
+                com.shared.models.dto.horario.TurnosDiaRequest(dia, turnosPorTipo)
             )
                 .onSuccess { _operacionState.value = UiState.Success("${it.message} para el día ${dia.lowercase()}") }
                 .onFailure { _operacionState.value = UiState.Error("Error al guardar turnos") }

@@ -3,8 +3,8 @@ package com.example.ta_avance.repository
 import com.example.ta_avance.api.service.AuthApiServiceKt
 import com.example.ta_avance.dto.login.LoginDataSimpleResponse
 import com.example.ta_avance.dto.login.LoginRequest
-import com.example.ta_avance.dto.recuperacion.RecuperacionRequest
-import com.example.ta_avance.dto.refresh.RefreshRequest
+import com.shared.models.dto.auth.RecuperacionRequest
+import com.shared.models.dto.auth.RefreshRequest
 import javax.inject.Inject
 import javax.inject.Singleton
 

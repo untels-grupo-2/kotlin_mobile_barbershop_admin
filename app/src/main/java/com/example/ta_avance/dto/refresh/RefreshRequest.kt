@@ -1,4 +1,4 @@
-package com.example.ta_avance.dto.refresh
+package com.shared.models.dto.auth
 
 data class RefreshRequest(
     val refreshToken: String

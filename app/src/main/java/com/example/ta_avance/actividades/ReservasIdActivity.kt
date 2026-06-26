@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.ta_avance.R
 import com.example.ta_avance.adapters.ReservaAdapter
 import com.example.ta_avance.dto.reserva.DtoReserva
-import com.example.ta_avance.ui.state.UiState
+import com.shared.models.ui.state.UiState
 import com.example.ta_avance.viewmodel.ReservasViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch

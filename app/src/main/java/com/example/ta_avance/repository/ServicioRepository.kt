@@ -4,8 +4,8 @@ import com.example.ta_avance.api.service.ServicioApiService
 import com.example.ta_avance.data.local.dao.ServicioDao
 import com.example.ta_avance.data.local.entity.toDto
 import com.example.ta_avance.data.local.entity.toEntity
-import com.example.ta_avance.dto.servicio.ServicioDto
-import com.example.ta_avance.dto.servicio.ServicioSimpleResponse
+import com.shared.models.dto.servicio.ServicioDto
+import com.shared.models.dto.servicio.ServicioSimpleResponse
 import com.example.ta_avance.util.CacheUtils
 import okhttp3.MultipartBody
 import okhttp3.RequestBody

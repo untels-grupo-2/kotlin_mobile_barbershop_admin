@@ -1,4 +1,4 @@
-package com.example.ta_avance.dto.horario
+package com.shared.models.dto.horario
 
 data class TurnosDiaRequest(
     val dia: String,

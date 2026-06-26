@@ -1,4 +1,4 @@
-package com.example.ta_avance.dto.horario
+package com.shared.models.dto.horario
 
 data class GenericResponse(
     val status: Int = 0,

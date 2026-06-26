@@ -1,7 +1,7 @@
 package com.example.ta_avance.api
 
 import com.example.ta_avance.api.service.AuthApiServiceKt
-import com.example.ta_avance.dto.refresh.RefreshRequest
+import com.shared.models.dto.auth.RefreshRequest
 import com.example.ta_avance.util.PreferenciasHelper
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex

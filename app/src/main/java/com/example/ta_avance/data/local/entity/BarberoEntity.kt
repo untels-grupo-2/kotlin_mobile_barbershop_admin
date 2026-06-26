@@ -2,7 +2,7 @@ package com.example.ta_avance.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.example.ta_avance.dto.barbero.BarberoDto
+import com.shared.models.dto.barbero.BarberoDto
 
 @Entity(tableName = "barberos")
 data class BarberoEntity(

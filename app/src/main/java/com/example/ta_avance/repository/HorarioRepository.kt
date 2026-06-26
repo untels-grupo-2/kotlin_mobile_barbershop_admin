@@ -1,9 +1,9 @@
 package com.example.ta_avance.repository
 
 import com.example.ta_avance.api.service.HorarioApiService
-import com.example.ta_avance.dto.horario.GenericResponse
-import com.example.ta_avance.dto.horario.HorarioResponseWrapper
-import com.example.ta_avance.dto.horario.TurnosDiaRequest
+import com.shared.models.dto.horario.GenericResponse
+import com.shared.models.dto.horario.HorarioResponseWrapper
+import com.shared.models.dto.horario.TurnosDiaRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import okhttp3.ResponseBody

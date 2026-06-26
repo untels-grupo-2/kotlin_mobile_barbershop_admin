@@ -1,4 +1,4 @@
-package com.example.ta_avance.dto.barbero
+package com.shared.models.dto.barbero
 
 //USADO PARA EL ACTUALIZAR BARBERRO
 // BarberoSimpleResponse.java

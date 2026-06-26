@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.auth0.android.jwt.JWT
 import com.example.ta_avance.dto.login.LoginRequest
 import com.example.ta_avance.repository.AuthRepository
-import com.example.ta_avance.ui.state.UiState
+import com.shared.models.ui.state.UiState
 import com.example.ta_avance.util.PreferenciasHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
