@@ -22,8 +22,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ta_avance.R
 import com.example.ta_avance.adapters.BarberoAdapter
-import com.example.ta_avance.dto.barbero.BarberoDto
-import com.example.ta_avance.ui.state.UiState
+import com.shared.models.dto.barbero.BarberoDto
+import com.shared.models.ui.state.UiState
 import com.example.ta_avance.viewmodel.GestionarBarberoViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch

@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.ta_avance.R
 import com.example.ta_avance.adapters.ValoracionAdapter
 import com.example.ta_avance.dto.valoracion.ValoracionDto
-import com.example.ta_avance.ui.state.UiState
+import com.shared.models.ui.state.UiState
 import com.example.ta_avance.viewmodel.ListarValoracionViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch

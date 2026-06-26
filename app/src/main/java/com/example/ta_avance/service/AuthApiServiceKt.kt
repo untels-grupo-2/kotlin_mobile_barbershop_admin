@@ -1,11 +1,11 @@
 package com.example.ta_avance.api.service
 
-import com.example.ta_avance.dto.horario.GenericResponse
+import com.shared.models.dto.horario.GenericResponse
 import com.example.ta_avance.dto.login.LoginDataSimpleResponse
 import com.example.ta_avance.dto.login.LoginRequest
-import com.example.ta_avance.dto.recuperacion.RecuperacionRequest
-import com.example.ta_avance.dto.recuperacion.RecuperacionResponse
-import com.example.ta_avance.dto.refresh.RefreshRequest
+import com.shared.models.dto.auth.RecuperacionRequest
+import com.shared.models.dto.auth.RecuperacionResponse
+import com.shared.models.dto.auth.RefreshRequest
 import retrofit2.Response
 import retrofit2.http.*
 

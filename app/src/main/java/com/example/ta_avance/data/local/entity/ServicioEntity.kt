@@ -2,7 +2,7 @@ package com.example.ta_avance.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.example.ta_avance.dto.servicio.ServicioDto
+import com.shared.models.dto.servicio.ServicioDto
 
 @Entity(tableName = "servicios")
 data class ServicioEntity(

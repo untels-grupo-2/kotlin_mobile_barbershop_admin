@@ -1,7 +1,7 @@
 package com.example.ta_avance.api.service
 
-import com.example.ta_avance.dto.barbero.BarberoResponse
-import com.example.ta_avance.dto.barbero.BarberoSimpleResponse
+import com.shared.models.dto.barbero.BarberoResponse
+import com.shared.models.dto.barbero.BarberoSimpleResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response

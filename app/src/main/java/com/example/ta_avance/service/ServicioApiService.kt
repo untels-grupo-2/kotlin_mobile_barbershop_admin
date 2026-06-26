@@ -1,7 +1,7 @@
 package com.example.ta_avance.api.service
 
-import com.example.ta_avance.dto.servicio.ServicioResponse
-import com.example.ta_avance.dto.servicio.ServicioSimpleResponse
+import com.shared.models.dto.servicio.ServicioResponse
+import com.shared.models.dto.servicio.ServicioSimpleResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response

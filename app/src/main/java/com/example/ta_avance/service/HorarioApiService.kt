@@ -1,8 +1,8 @@
 package com.example.ta_avance.api.service
 
-import com.example.ta_avance.dto.horario.GenericResponse
-import com.example.ta_avance.dto.horario.HorarioResponseWrapper
-import com.example.ta_avance.dto.horario.TurnosDiaRequest
+import com.shared.models.dto.horario.GenericResponse
+import com.shared.models.dto.horario.HorarioResponseWrapper
+import com.shared.models.dto.horario.TurnosDiaRequest
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*

@@ -4,8 +4,8 @@ import com.example.ta_avance.api.service.BarberoApiService
 import com.example.ta_avance.data.local.dao.BarberoDao
 import com.example.ta_avance.data.local.entity.toDto
 import com.example.ta_avance.data.local.entity.toEntity
-import com.example.ta_avance.dto.barbero.BarberoDto
-import com.example.ta_avance.dto.barbero.BarberoSimpleResponse
+import com.shared.models.dto.barbero.BarberoDto
+import com.shared.models.dto.barbero.BarberoSimpleResponse
 import com.example.ta_avance.util.CacheUtils
 import okhttp3.MultipartBody
 import okhttp3.RequestBody

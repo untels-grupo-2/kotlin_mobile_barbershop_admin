@@ -8,7 +8,7 @@ import com.example.ta_avance.dto.login.LoginRequest
 import com.example.ta_avance.dto.reserva.DtoReserva
 import com.example.ta_avance.repository.ReservaRepository
 import com.example.ta_avance.repository.UsuarioRepository
-import com.example.ta_avance.ui.state.UiState
+import com.shared.models.ui.state.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -4,10 +4,10 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ta_avance.dto.barbero.BarberoDto
-import com.example.ta_avance.dto.barbero.BarberoRequest
+import com.shared.models.dto.barbero.BarberoDto
+import com.shared.models.dto.barbero.BarberoRequest
 import com.example.ta_avance.repository.BarberoRepository
-import com.example.ta_avance.ui.state.UiState
+import com.shared.models.ui.state.UiState
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,4 +1,4 @@
-package com.example.ta_avance.dto.barbero
+package com.shared.models.dto.barbero
 
 data class BarberoRequest(
     val nombre: String

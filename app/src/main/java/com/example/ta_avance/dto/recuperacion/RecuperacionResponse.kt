@@ -1,4 +1,4 @@
-package com.example.ta_avance.dto.recuperacion
+package com.shared.models.dto.auth
 
 data class RecuperacionResponse(
     val status: Int = 0,
