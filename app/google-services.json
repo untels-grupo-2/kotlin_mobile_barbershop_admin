@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "642540830544",
-    "project_id": "diamond-barbershop-43efa",
-    "storage_bucket": "diamond-barbershop-43efa.firebasestorage.app"
+    "project_number": "671738568549",
+    "project_id": "diamond-barberhub",
+    "storage_bucket": "diamond-barberhub.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:642540830544:android:95624deeef9a3d30397655",
+        "mobilesdk_app_id": "1:671738568549:android:7e977bf3d6c162dbdc8b8c",
         "android_client_info": {
           "package_name": "com.example.ta_avance"
         }
@@ -15,45 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC8F_TvTRPzCH-oGmzuTqmaQr9CRJI4sBU"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:642540830544:android:6224873a38b637a5397655",
-        "android_client_info": {
-          "package_name": "com.example.ta_avance.local"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyC8F_TvTRPzCH-oGmzuTqmaQr9CRJI4sBU"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:642540830544:android:f1a1a4cea5003f33397655",
-        "android_client_info": {
-          "package_name": "com.example.ta_avance.staging"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyC8F_TvTRPzCH-oGmzuTqmaQr9CRJI4sBU"
+          "current_key": "AIzaSyBBaPCan13QzOM9mLp6n-NCRysT7QKLkYQ"
         }
       ],
       "services": {
