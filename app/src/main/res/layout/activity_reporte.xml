@@ -204,4 +204,36 @@
         </TableLayout>
     </androidx.cardview.widget.CardView>
 
+    <!-- Botón Descargar PDF -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnDescargarPdf"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Descargar PDF"
+        android:textColor="@color/white"
+        app:backgroundTint="@color/barber_blue_navy"
+        app:cornerRadius="16dp"
+        app:icon="@android:drawable/stat_sys_download"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/cardResultado"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Botón Compartir PDF -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCompartirPdf"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Compartir"
+        android:textColor="@color/white"
+        app:backgroundTint="@color/barber_gray_steel"
+        app:cornerRadius="16dp"
+        app:icon="@android:drawable/ic_menu_share"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/btnDescargarPdf"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

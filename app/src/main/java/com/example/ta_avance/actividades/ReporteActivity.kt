@@ -1,6 +1,7 @@
 package com.example.ta_avance.actividades
 
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
@@ -20,9 +21,11 @@ import com.example.ta_avance.dto.servicio.ServicioDto
 import com.example.ta_avance.ui.state.UiState
 import com.example.ta_avance.viewmodel.GestionarServicioViewModel
 import com.example.ta_avance.viewmodel.ReporteViewModel
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -37,6 +40,8 @@ class ReporteActivity : AppCompatActivity() {
     private lateinit var tvMontoTotal: TextView
     private lateinit var tvCantidadReservas: TextView
     private lateinit var cardResultado: CardView
+    private lateinit var btnDescargarPdf: MaterialButton
+    private lateinit var btnCompartirPdf: MaterialButton
     private lateinit var servicioViewModel: GestionarServicioViewModel
     private lateinit var reporteViewModel: ReporteViewModel
 
@@ -44,6 +49,7 @@ class ReporteActivity : AppCompatActivity() {
     private var fechaInicioSeleccionada: LocalDate? = null
     private var fechaFinSeleccionada: LocalDate? = null
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    private var archivoPdf: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +63,8 @@ class ReporteActivity : AppCompatActivity() {
         tvMontoTotal = findViewById(R.id.tvMontoTotal)
         tvCantidadReservas = findViewById(R.id.tvCantidadReservas)
         cardResultado = findViewById(R.id.cardResultado)
+        btnDescargarPdf = findViewById(R.id.btnDescargarPdf)
+        btnCompartirPdf = findViewById(R.id.btnCompartirPdf)
 
         servicioViewModel = ViewModelProvider(this).get(GestionarServicioViewModel::class.java)
         reporteViewModel = ViewModelProvider(this).get(ReporteViewModel::class.java)
@@ -88,8 +96,35 @@ class ReporteActivity : AppCompatActivity() {
                             tvMontoTotal.text = "S/ ${reporte.montoTotal}"
                             tvCantidadReservas.text = "${reporte.cantidadReservas}"
                             cardResultado.visibility = View.VISIBLE
+                            btnDescargarPdf.visibility = View.VISIBLE
                         }
                         is UiState.Error -> Toast.makeText(this@ReporteActivity, state.message, Toast.LENGTH_SHORT).show()
+                        else -> {}
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                reporteViewModel.descargaState.collect { state ->
+                    when (state) {
+                        is UiState.Loading -> {
+                            btnDescargarPdf.isEnabled = false
+                            btnDescargarPdf.text = "Descargando..."
+                        }
+                        is UiState.Success -> {
+                            archivoPdf = state.data
+                            btnDescargarPdf.isEnabled = true
+                            btnDescargarPdf.text = "Descargar PDF"
+                            btnCompartirPdf.visibility = View.VISIBLE
+                            Toast.makeText(this@ReporteActivity, "PDF guardado en Descargas", Toast.LENGTH_SHORT).show()
+                        }
+                        is UiState.Error -> {
+                            btnDescargarPdf.isEnabled = true
+                            btnDescargarPdf.text = "Descargar PDF"
+                            Toast.makeText(this@ReporteActivity, state.message, Toast.LENGTH_SHORT).show()
+                        }
                         else -> {}
                     }
                 }
@@ -99,6 +134,19 @@ class ReporteActivity : AppCompatActivity() {
         etFechaInicio.setOnClickListener { mostrarDatePicker(true) }
         etFechaFin.setOnClickListener { mostrarDatePicker(false) }
         findViewById<Button>(R.id.btnFiltrarReporte).setOnClickListener { filtrarReporte() }
+
+        btnDescargarPdf.setOnClickListener {
+            val servicioSeleccionado = reporteViewModel.resolverServicioSeleccionado(
+                listaServicios, spinnerServicio.selectedItemPosition
+            )
+            reporteViewModel.descargarReporte(this, fechaInicioSeleccionada, fechaFinSeleccionada, servicioSeleccionado)
+        }
+
+        btnCompartirPdf.setOnClickListener {
+            val archivo = archivoPdf ?: return@setOnClickListener
+            val intent = reporteViewModel.construirIntentCompartir(this, archivo)
+            startActivity(Intent.createChooser(intent, "Compartir reporte"))
+        }
 
         servicioViewModel.obtenerServicios()
     }
@@ -119,6 +167,9 @@ class ReporteActivity : AppCompatActivity() {
 
     private fun filtrarReporte() {
         cardResultado.visibility = View.GONE
+        btnDescargarPdf.visibility = View.GONE
+        btnCompartirPdf.visibility = View.GONE
+        archivoPdf = null
         val servicioSeleccionado = reporteViewModel.resolverServicioSeleccionado(
             listaServicios,
             spinnerServicio.selectedItemPosition
