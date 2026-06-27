@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.android.library)
+    id("com.android.library") version "8.9.2"
     alias(libs.plugins.kotlin.android)
 }
 
