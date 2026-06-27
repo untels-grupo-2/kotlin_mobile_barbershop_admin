@@ -45,7 +45,7 @@ class ListarValoracionViewModel @Inject constructor(
     }
 
     fun generarUriWhatsAppValoracion(valoracion: ValoracionDto): String {
-        val mensaje = construirMensajeValoracion(valoracion.usuario_nombre)
-        return generarUriWhatsApp(valoracion.celular, mensaje)
+        val mensaje = construirMensajeValoracion(valoracion.usuario_nombre ?: "")
+        return generarUriWhatsApp(valoracion.celular ?: "", mensaje)
     }
 }
