@@ -33,7 +33,7 @@ class ListarUsuarioViewModel @Inject constructor(
     }
 
     fun generarUriWhatsAppBienvenida(usuario: LoginRequest): String {
-        val mensaje = construirMensajeBienvenida(usuario.nombre, usuario.username)
-        return generarUriWhatsApp(usuario.celular, mensaje)
+        val mensaje = construirMensajeBienvenida(usuario.nombre ?: "", usuario.username)
+        return generarUriWhatsApp(usuario.celular ?: "", mensaje)
     }
 }
