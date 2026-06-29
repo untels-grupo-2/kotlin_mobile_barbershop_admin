@@ -7,5 +7,6 @@ data class ValoracionDto(
     val valoracion: Long = 0,
     val util: Boolean = false,
     val mensaje: String? = null,
-    val usuario_nombre: String? = null
+    val usuario_nombre: String? = null,
+    val estado: Int = 1
 )

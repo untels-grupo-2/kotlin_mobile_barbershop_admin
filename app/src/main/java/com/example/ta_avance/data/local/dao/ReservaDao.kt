@@ -14,6 +14,9 @@ interface ReservaDao {
     @Query("DELETE FROM reservas WHERE cacheKey = :cacheKey")
     suspend fun eliminarPorClave(cacheKey: String)
 
+    @Query("DELETE FROM reservas")
+    suspend fun eliminarTodos()
+
     @Query("SELECT MAX(cacheTimestamp) FROM reservas WHERE cacheKey = :cacheKey")
     suspend fun obtenerTimestamp(cacheKey: String): Long?
 }

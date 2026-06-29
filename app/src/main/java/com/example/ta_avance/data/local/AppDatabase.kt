@@ -13,7 +13,7 @@ import com.example.ta_avance.data.local.entity.*
         ValoracionEntity::class,
         UsuarioEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -34,6 +34,10 @@ class UsuarioRepository @Inject constructor(
         }
     }
 
+    suspend fun invalidarCache() {
+        usuarioDao.eliminarTodos()
+    }
+
     suspend fun obtenerUsuarioPorId(id: Long): Result<LoginRequest> {
         val cachedUser = usuarioDao.obtenerPorId(id)
         if (cachedUser != null && CacheUtils.esCacheValida(cachedUser.cacheTimestamp)) {

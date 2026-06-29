@@ -58,7 +58,8 @@ class HorarioActualViewModel @Inject constructor(
             horarioRepository.exportarHorario(lunes, domingo)
                 .onSuccess { body ->
                     try {
-                        val file = File(context.getExternalFilesDir(null), "horario_barbero.pdf")
+                        val dir = context.getExternalFilesDir(null) ?: context.filesDir
+                        val file = File(dir, "horario_barbero.pdf")
                         FileOutputStream(file).use { it.write(body.bytes()) }
 
                         val intent = Intent(Intent.ACTION_VIEW).apply {

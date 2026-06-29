@@ -23,7 +23,7 @@ class ValoracionRepository @Inject constructor(
         return runCatching {
             val response = valoracionApiService.listarValoraciones()
             if (response.isSuccessful) {
-                val data = response.body()!!.data
+                val data = response.body()!!.data.filter { it.estado == 1 }
                 valoracionDao.eliminarTodos()
                 valoracionDao.insertarTodos(data.map { it.toEntity() })
                 data

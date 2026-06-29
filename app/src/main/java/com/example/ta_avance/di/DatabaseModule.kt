@@ -18,7 +18,9 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, "barbershop_db").build()
+        Room.databaseBuilder(context, AppDatabase::class.java, "barbershop_db")
+            .fallbackToDestructiveMigration()
+            .build()
 
     @Provides fun provideBarberoDao(db: AppDatabase): BarberoDao = db.barberoDao()
     @Provides fun provideServicioDao(db: AppDatabase): ServicioDao = db.servicioDao()

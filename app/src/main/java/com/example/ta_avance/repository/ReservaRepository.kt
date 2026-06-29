@@ -26,7 +26,7 @@ class ReservaRepository @Inject constructor(
         return runCatching {
             val response = reservaApiService.listarReservas(fecha, estado)
             if (response.isSuccessful) {
-                val data = response.body()!!.data
+                val data = response.body()!!.data?.content ?: emptyList()
                 reservaDao.eliminarPorClave(cacheKey)
                 reservaDao.insertarTodos(data.map { it.toEntity(cacheKey) })
                 data
@@ -47,7 +47,7 @@ class ReservaRepository @Inject constructor(
         return runCatching {
             val response = reservaApiService.listarReservasConId(fecha, estado, usuarioId)
             if (response.isSuccessful) {
-                val data = response.body()!!.data
+                val data = response.body()!!.data?.content ?: emptyList()
                 reservaDao.eliminarPorClave(cacheKey)
                 reservaDao.insertarTodos(data.map { it.toEntity(cacheKey) })
                 data
@@ -62,6 +62,7 @@ class ReservaRepository @Inject constructor(
     suspend fun cambiarEstadoReserva(reservaId: Long, estado: String, motivoDescripcion: String): Result<Unit> = runCatching {
         val response = reservaApiService.cambiarEstadoReserva(reservaId, estado, motivoDescripcion)
         if (!response.isSuccessful) error("Error ${response.code()}: ${response.message()}")
+        reservaDao.eliminarTodos()
     }
 
     fun observarReservas(fecha: String, estado: String): Flow<List<DtoReserva>> = flow {
@@ -72,7 +73,7 @@ class ReservaRepository @Inject constructor(
             try {
                 val response = reservaApiService.listarReservas(fecha, estado)
                 if (response.isSuccessful) {
-                    val data = response.body()!!.data
+                    val data = response.body()!!.data?.content ?: emptyList()
                     reservaDao.eliminarPorClave(cacheKey)
                     reservaDao.insertarTodos(data.map { it.toEntity(cacheKey) })
                     emit(data)

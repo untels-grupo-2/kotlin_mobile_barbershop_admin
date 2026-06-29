@@ -13,10 +13,7 @@ interface AuthApiServiceKt {
     @POST("autenticacion/login")
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginDataSimpleResponse>
 
-    @POST("autenticacion/registro/cliente")
-    suspend fun register(@Body registerRequest: LoginRequest): Response<GenericResponse>
-
-    @POST("autenticacion/refresh-token")
+@POST("autenticacion/refresh-token")
     suspend fun refresh(@Body refreshRequest: RefreshRequest): Response<LoginDataSimpleResponse>
 
     @POST("email/password")

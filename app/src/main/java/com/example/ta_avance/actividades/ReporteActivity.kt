@@ -50,6 +50,7 @@ class ReporteActivity : AppCompatActivity() {
     private var fechaFinSeleccionada: LocalDate? = null
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     private var archivoPdf: File? = null
+    private var reporteCargado: com.example.ta_avance.dto.reporte.DtoReporte? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,7 +93,8 @@ class ReporteActivity : AppCompatActivity() {
                     when (state) {
                         is UiState.Success -> {
                             val reporte = state.data
-                            tvServicioNombre.text = reporte.servicioNombre ?: "Todos"
+                            reporteCargado = reporte
+                            tvServicioNombre.text = reporte.servicioNombre?.ifBlank { "Todos" } ?: "Todos"
                             tvMontoTotal.text = "S/ ${reporte.montoTotal}"
                             tvCantidadReservas.text = "${reporte.cantidadReservas}"
                             cardResultado.visibility = View.VISIBLE
@@ -136,7 +138,8 @@ class ReporteActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnFiltrarReporte).setOnClickListener { filtrarReporte() }
 
         btnDescargarPdf.setOnClickListener {
-            reporteViewModel.descargarReporte(this, fechaInicioSeleccionada, fechaFinSeleccionada)
+            val reporte = reporteCargado ?: return@setOnClickListener
+            reporteViewModel.descargarReporte(this, reporte, fechaInicioSeleccionada, fechaFinSeleccionada)
         }
 
         btnCompartirPdf.setOnClickListener {
