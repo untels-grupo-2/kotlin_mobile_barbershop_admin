@@ -5,22 +5,22 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface ReservaApiService {
-    @GET("api/reserva/admin/listar")
+    @GET("reservas/admin")
     suspend fun listarReservas(
-        @Query("fecha") fecha: String,
+        @Query("fechaDesde") fecha: String,
         @Query("estado") estado: String
     ): Response<DtoReservaResponse>
 
-    @GET("api/reserva/admin/listar")
+    @GET("reservas/admin")
     suspend fun listarReservasConId(
-        @Query("fecha") fecha: String,
+        @Query("fechaDesde") fecha: String,
         @Query("estado") estado: String,
-        @Query("usuarioId") usuarioId: Long
+        @Query("clienteId") usuarioId: Long
     ): Response<DtoReservaResponse>
 
-    @PUT("api/reserva/admin/cambiar-estado/{reservaId}")
+    @PUT("reservas/{id}/estado")
     suspend fun cambiarEstadoReserva(
-        @Path("reservaId") reservaId: Long,
+        @Path("id") reservaId: Long,
         @Query("estado") estado: String,
         @Query("motivoDescripcion") motivoDescripcion: String
     ): Response<Void>

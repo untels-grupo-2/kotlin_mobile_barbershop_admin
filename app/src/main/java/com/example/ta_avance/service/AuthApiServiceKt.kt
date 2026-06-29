@@ -10,15 +10,15 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface AuthApiServiceKt {
-    @POST("api/auth/login")
+    @POST("autenticacion/login")
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginDataSimpleResponse>
 
-    @POST("api/auth/register")
+    @POST("autenticacion/registro/cliente")
     suspend fun register(@Body registerRequest: LoginRequest): Response<GenericResponse>
 
-    @POST("api/auth/refreshToken")
+    @POST("autenticacion/refresh-token")
     suspend fun refresh(@Body refreshRequest: RefreshRequest): Response<LoginDataSimpleResponse>
 
-    @POST("emailPassword/sendEmail")
+    @POST("email/password")
     suspend fun recuperarContraseña(@Body recuperacionRequest: RecuperacionRequest): Response<RecuperacionResponse>
 }

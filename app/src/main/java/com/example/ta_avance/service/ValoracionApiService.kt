@@ -6,9 +6,9 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface ValoracionApiService {
-    @GET("api/valoracion/listar")
+    @GET("valoraciones")
     suspend fun listarValoraciones(): Response<ValoracionResponse>
 
-    @GET("api/valoracion/responder/{valoracionId}")
-    suspend fun responderValoracion(@Path("valoracionId") valoracionId: Long): Response<ValoracionSimpleResponse>
+    @PATCH("valoraciones/{id}/estado")
+    suspend fun responderValoracion(@Path("id") valoracionId: Long): Response<ValoracionSimpleResponse>
 }

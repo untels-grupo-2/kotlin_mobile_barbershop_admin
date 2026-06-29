@@ -8,21 +8,21 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface BarberoApiService {
-    @GET("api/barbero/listar")
+    @GET("barberos")
     suspend fun listarBarberos(): Response<BarberoResponse>
 
     @Multipart
-    @POST("api/barbero/crear")
+    @POST("barberos")
     suspend fun crearBarbero(
         @Part("dtoBarbero") dtoBarbero: RequestBody,
         @Part imagen: MultipartBody.Part?
     ): Response<BarberoResponse>
 
-    @DELETE("api/barbero/eliminar/{id}")
+    @DELETE("barberos/{id}")
     suspend fun eliminarBarbero(@Path("id") id: Int): Response<BarberoResponse>
 
     @Multipart
-    @PUT("api/barbero/actualizar/{id}")
+    @PUT("barberos/{id}")
     suspend fun actualizarBarbero(
         @Path("id") id: Int,
         @Part("dtoBarbero") dtoBarbero: RequestBody,

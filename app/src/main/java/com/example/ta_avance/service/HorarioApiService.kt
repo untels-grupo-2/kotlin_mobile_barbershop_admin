@@ -9,16 +9,17 @@ import retrofit2.http.*
 import java.time.LocalDate
 
 interface HorarioApiService {
-    @GET("api/horarioInstancia/actual")
+    @GET("horarios-semana")
     suspend fun obtenerHorarioActual(): Response<HorarioResponseWrapper>
 
-    @PUT("api/horarioBarberoBase/actualizarTurnosDia")
+    @PUT("horarios-base")
     suspend fun actualizarTurnosDia(@Body request: TurnosDiaRequest): Response<GenericResponse>
 
-    @PUT("api/horarioBarberoBase/confirmarHorario")
+    @PUT("horarios-base/confirmacion")
     suspend fun confirmarHorario(): Response<GenericResponse>
 
-    @GET("api/reportes/horario")
+    @Streaming
+    @GET("reporte/horarios")
     suspend fun exportarHorario(
         @Query("fechaInicio") fechaInicio: LocalDate,
         @Query("fechaFin") fechaFin: LocalDate

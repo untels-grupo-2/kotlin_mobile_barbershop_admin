@@ -7,7 +7,7 @@ import retrofit2.http.*
 import java.time.LocalDate
 
 interface ReporteApiService {
-    @GET("api/reserva/obtenerReportes")
+    @GET("reservas/reportes")
     suspend fun obtenerReporte(
         @Query("fechaInicio") fechaInicio: LocalDate,
         @Query("fechaFin") fechaFin: LocalDate,
@@ -15,7 +15,7 @@ interface ReporteApiService {
     ): Response<DtoReporteResponse>
 
     @Streaming
-    @GET("api/reportes/horario")
+    @GET("reporte/horarios")
     suspend fun descargarReportePdf(
         @Query("fechaInicio") fechaInicio: LocalDate,
         @Query("fechaFin") fechaFin: LocalDate
