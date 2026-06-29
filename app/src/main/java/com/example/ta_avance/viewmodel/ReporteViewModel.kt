@@ -2,6 +2,7 @@ package com.example.ta_avance.viewmodel
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -64,7 +65,7 @@ class ReporteViewModel @Inject constructor(
     }
 
     fun generarNombresServicios(servicios: List<ServicioDto>): List<String> =
-        listOf("Todos") + servicios.map { it.nombre }
+        listOf("Todos") + servicios.map { it.nombre ?: "" }
 
     fun resolverServicioSeleccionado(servicios: List<ServicioDto>, posicion: Int): String? =
         if (posicion == 0) null else servicios.getOrNull(posicion - 1)?.nombre
