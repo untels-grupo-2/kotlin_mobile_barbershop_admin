@@ -44,7 +44,7 @@ class GestionarBarberoViewModel @Inject constructor(
             return
         }
         val dtoBody = buildJsonBody(BarberoRequest(nombre))
-        val imagenPart = buildImagePart(context, imagenUri) ?: return
+        val imagenPart = buildImagePart(context, imagenUri)
         _operacionState.value = UiState.Loading
         viewModelScope.launch {
             barberoRepository.crearBarbero(dtoBody, imagenPart)
