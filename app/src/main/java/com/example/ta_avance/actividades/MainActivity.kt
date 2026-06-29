@@ -1,12 +1,17 @@
 package com.example.ta_avance.actividades
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -26,9 +31,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnOlvideContrasena: Button
     private lateinit var mainViewModel: MainViewModel
 
+    private val notifPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* resultado ignorado — la app funciona con o sin el permiso */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        solicitarPermisoNotificaciones()
 
         campoUsuario = findViewById(R.id.campoUsuario)
         campoContraseña = findViewById(R.id.campoContraseña)
@@ -82,6 +92,16 @@ class MainActivity : AppCompatActivity() {
                         is UiState.Empty -> {}
                     }
                 }
+            }
+        }
+    }
+
+    private fun solicitarPermisoNotificaciones() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }

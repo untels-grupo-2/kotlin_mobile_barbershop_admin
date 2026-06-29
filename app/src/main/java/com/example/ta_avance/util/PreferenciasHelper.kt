@@ -21,9 +21,14 @@ class PreferenciasHelper @Inject constructor(context: Context) {
 
     fun limpiarPreferencias() = preferences.edit().clear().apply()
 
+    fun guardarFcmToken(fcmToken: String) = preferences.edit().putString(FCM_TOKEN_KEY, fcmToken).apply()
+
+    fun obtenerFcmToken(): String? = preferences.getString(FCM_TOKEN_KEY, null)
+
     companion object {
         private const val PREFS_NAME = "MisPreferencias"
         private const val TOKEN_KEY = "token"
         private const val REFRESH = "refreshToken"
+        private const val FCM_TOKEN_KEY = "fcmToken"
     }
 }

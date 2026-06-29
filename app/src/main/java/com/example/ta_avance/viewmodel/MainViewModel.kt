@@ -1,21 +1,29 @@
 package com.example.ta_avance.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.auth0.android.jwt.JWT
 import com.example.ta_avance.dto.login.LoginRequest
 import com.example.ta_avance.repository.AuthRepository
+import com.example.ta_avance.repository.NotificacionRepository
 import com.shared.models.ui.state.UiState
 import com.example.ta_avance.util.PreferenciasHelper
+import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val notificacionRepository: NotificacionRepository,
     private val preferenciasHelper: PreferenciasHelper
 ) : ViewModel() {
 
@@ -55,6 +63,18 @@ class MainViewModel @Inject constructor(
                     val nombre = jwt.getClaim("nombre").asString() ?: ""
                     val apellido = jwt.getClaim("apellido").asString() ?: ""
                     _loginState.value = UiState.Success(Pair(nombre, apellido))
+
+                    // Scope independiente para que la navegación no cancele la llamada
+                    CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+                        runCatching {
+                            Log.d("FCM", "Obteniendo token FCM...")
+                            val fcmToken = FirebaseMessaging.getInstance().token.await()
+                            Log.d("FCM", "Token obtenido: $fcmToken")
+                            notificacionRepository.registrarFcmToken(fcmToken)
+                                .onSuccess { Log.d("FCM", "Token registrado en backend OK") }
+                                .onFailure { Log.e("FCM", "Error al registrar token: ${it.message}") }
+                        }.onFailure { Log.e("FCM", "Error obteniendo token Firebase: ${it.message}", it) }
+                    }
                 }
                 .onFailure { e ->
                     _loginState.value = UiState.Error(e.message ?: "Error desconocido")
