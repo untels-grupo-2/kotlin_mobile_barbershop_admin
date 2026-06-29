@@ -25,9 +25,9 @@ class BarberoRepository @Inject constructor(
         return runCatching {
             val response = barberoApiService.listarBarberos()
             if (response.isSuccessful) {
-                val data = response.body()!!.data
+                val data = response.body()?.data ?: emptyList()
                 barberoDao.eliminarTodos()
-                barberoDao.insertarTodos(data.map { it.toEntity() })
+                if (data.isNotEmpty()) barberoDao.insertarTodos(data.map { it.toEntity() })
                 data
             } else {
                 error("Error ${response.code()}: ${response.message()}")
@@ -40,9 +40,9 @@ class BarberoRepository @Inject constructor(
     suspend fun crearBarbero(dtoBarbero: RequestBody, imagen: MultipartBody.Part?): Result<List<BarberoDto>> = runCatching {
         val response = barberoApiService.crearBarbero(dtoBarbero, imagen)
         if (response.isSuccessful) {
-            val data = response.body()!!.data
+            val data = response.body()?.data ?: emptyList()
             barberoDao.eliminarTodos()
-            barberoDao.insertarTodos(data.map { it.toEntity() })
+            if (data.isNotEmpty()) barberoDao.insertarTodos(data.map { it.toEntity() })
             data
         } else error("Error ${response.code()}: ${response.message()}")
     }
@@ -50,9 +50,9 @@ class BarberoRepository @Inject constructor(
     suspend fun eliminarBarbero(id: Int): Result<List<BarberoDto>> = runCatching {
         val response = barberoApiService.eliminarBarbero(id)
         if (response.isSuccessful) {
-            val data = response.body()!!.data
+            val data = response.body()?.data ?: emptyList()
             barberoDao.eliminarTodos()
-            barberoDao.insertarTodos(data.map { it.toEntity() })
+            if (data.isNotEmpty()) barberoDao.insertarTodos(data.map { it.toEntity() })
             data
         } else error("Error ${response.code()}: ${response.message()}")
     }
@@ -61,7 +61,7 @@ class BarberoRepository @Inject constructor(
         val response = barberoApiService.actualizarBarbero(id, dtoBarbero, imagen)
         if (response.isSuccessful) {
             barberoDao.eliminarTodos()
-            response.body()!!
+            response.body() ?: error("Respuesta vacía del servidor")
         } else error("Error ${response.code()}: ${response.message()}")
     }
 }

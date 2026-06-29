@@ -25,9 +25,9 @@ class ServicioRepository @Inject constructor(
         return runCatching {
             val response = servicioApiService.listarServicios()
             if (response.isSuccessful) {
-                val data = response.body()!!.data
+                val data = response.body()?.data ?: emptyList()
                 servicioDao.eliminarTodos()
-                servicioDao.insertarTodos(data.map { it.toEntity() })
+                if (data.isNotEmpty()) servicioDao.insertarTodos(data.map { it.toEntity() })
                 data
             } else {
                 error("Error ${response.code()}: ${response.message()}")
@@ -40,9 +40,9 @@ class ServicioRepository @Inject constructor(
     suspend fun crearServicio(dtoServicio: RequestBody, imagen: MultipartBody.Part?): Result<List<ServicioDto>> = runCatching {
         val response = servicioApiService.crearServicio(dtoServicio, imagen)
         if (response.isSuccessful) {
-            val data = response.body()!!.data
+            val data = response.body()?.data ?: emptyList()
             servicioDao.eliminarTodos()
-            servicioDao.insertarTodos(data.map { it.toEntity() })
+            if (data.isNotEmpty()) servicioDao.insertarTodos(data.map { it.toEntity() })
             data
         } else error("Error ${response.code()}: ${response.message()}")
     }
@@ -50,9 +50,9 @@ class ServicioRepository @Inject constructor(
     suspend fun eliminarServicio(id: Int): Result<List<ServicioDto>> = runCatching {
         val response = servicioApiService.eliminarServicio(id)
         if (response.isSuccessful) {
-            val data = response.body()!!.data
+            val data = response.body()?.data ?: emptyList()
             servicioDao.eliminarTodos()
-            servicioDao.insertarTodos(data.map { it.toEntity() })
+            if (data.isNotEmpty()) servicioDao.insertarTodos(data.map { it.toEntity() })
             data
         } else error("Error ${response.code()}: ${response.message()}")
     }
@@ -61,7 +61,7 @@ class ServicioRepository @Inject constructor(
         val response = servicioApiService.actualizarServicio(id, dtoServicio, imagen)
         if (response.isSuccessful) {
             servicioDao.eliminarTodos()
-            response.body()!!
+            response.body() ?: error("Respuesta vacía del servidor")
         } else error("Error ${response.code()}: ${response.message()}")
     }
 }
