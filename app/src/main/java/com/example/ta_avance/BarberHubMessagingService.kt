@@ -5,12 +5,21 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.ta_avance.actividades.AdminHomeActivity
+import com.example.ta_avance.repository.NotificacionRepository
+import com.example.ta_avance.util.PreferenciasHelper
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class BarberHubMessagingService : FirebaseMessagingService() {
+
+    @Inject lateinit var notificacionRepository: NotificacionRepository
+    @Inject lateinit var prefs: PreferenciasHelper
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
@@ -24,7 +33,11 @@ class BarberHubMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        // Aquí se enviará el token al backend cuando esté listo
+        // Solo envía si hay sesión activa
+        if (prefs.obtenerToken() == null) return
+        CoroutineScope(Dispatchers.IO).launch {
+            notificacionRepository.registrarFcmToken(token)
+        }
     }
 
     private fun mostrarNotificacion(titulo: String, cuerpo: String, reservaId: String?) {

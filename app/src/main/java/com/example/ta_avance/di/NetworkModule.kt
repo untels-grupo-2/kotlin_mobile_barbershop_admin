@@ -101,4 +101,9 @@ object NetworkModule {
     @Singleton
     fun provideReporteApiService(retrofit: Retrofit): ReporteApiService =
         retrofit.create(ReporteApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideNotificacionApiService(retrofit: Retrofit): NotificacionApiService =
+        retrofit.create(NotificacionApiService::class.java)
 }
