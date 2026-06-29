@@ -39,13 +39,13 @@ class ListarValoracionViewModel @Inject constructor(
         _operacionState.value = UiState.Loading
         viewModelScope.launch {
             valoracionRepository.responderValoracion(valoracionId)
-                .onSuccess { _operacionState.value = UiState.Success(it.message) }
+                .onSuccess { _operacionState.value = UiState.Success(it.message ?: "") }
                 .onFailure { _operacionState.value = UiState.Error(it.message ?: "Error desconocido") }
         }
     }
 
     fun generarUriWhatsAppValoracion(valoracion: ValoracionDto): String {
-        val mensaje = construirMensajeValoracion(valoracion.usuario_nombre)
-        return generarUriWhatsApp(valoracion.celular, mensaje)
+        val mensaje = construirMensajeValoracion(valoracion.usuario_nombre ?: "")
+        return generarUriWhatsApp(valoracion.celular ?: "", mensaje)
     }
 }

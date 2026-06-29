@@ -61,7 +61,7 @@ class HorarioPrepararViewModel @Inject constructor(
         _operacionState.value = UiState.Loading
         viewModelScope.launch {
             horarioRepository.confirmarHorario()
-                .onSuccess { _operacionState.value = UiState.Success(it.message) }
+                .onSuccess { _operacionState.value = UiState.Success(it.message ?: "") }
                 .onFailure { _operacionState.value = UiState.Error("Error al confirmar horario") }
         }
     }

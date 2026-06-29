@@ -85,11 +85,11 @@ class ReservasViewModel @Inject constructor(
 
     fun generarUriWhatsAppConfirmacion(usuario: LoginRequest, reserva: DtoReserva): String {
         val mensaje = construirMensajeConfirmacion(
-            usuario.nombre,
-            reserva.fechaReserva,
-            reserva.horarioRango,
-            reserva.servicioNombre
+            usuario.nombre ?: "",
+            reserva.fechaReserva ?: "",
+            reserva.horarioRango ?: "",
+            reserva.servicioNombre ?: ""
         )
-        return generarUriWhatsApp(usuario.celular, mensaje)
+        return generarUriWhatsApp(usuario.celular ?: "", mensaje)
     }
 }
