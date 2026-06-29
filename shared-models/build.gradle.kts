@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.android.library)
+    id("com.android.library")
     alias(libs.plugins.kotlin.android)
 }
 
@@ -21,6 +21,5 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
     implementation("com.google.code.gson:gson:2.10.1")
 }
